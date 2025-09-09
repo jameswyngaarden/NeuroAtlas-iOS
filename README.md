@@ -149,7 +149,7 @@ Contributions are welcome! This project is designed to showcase modern developme
 - Performance optimizations
 - Accessibility improvements
 
-## 📚 Documentation
+## Documentation
 
 - [**Development Guide**](docs/DEVELOPMENT.md) - Detailed setup and development instructions
 - [**API Documentation**](docs/API_DOCUMENTATION.md) - Backend service specifications  
