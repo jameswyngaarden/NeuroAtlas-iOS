@@ -31,7 +31,7 @@ struct CoordinateHeaderView: View {
             }
         }
         .padding()
-        .background(Color(.systemGray6))
+        .background(Color.gray.opacity(0.1))
     }
 }
 

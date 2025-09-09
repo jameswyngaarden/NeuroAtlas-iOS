@@ -81,9 +81,7 @@ class BrainAtlasViewModel: ObservableObject {
         updateCoordinate(mniCoordinate)
         updateCrosshair(at: location)
         
-        // Haptic feedback
-        let impact = UIImpactFeedbackGenerator(style: .light)
-        impact.impactOccurred()
+        // TODO: Add haptic feedback later
     }
     
     func handleDrag(at location: CGPoint, containerSize: CGSize) {

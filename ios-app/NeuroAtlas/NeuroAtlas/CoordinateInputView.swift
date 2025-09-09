@@ -16,14 +16,14 @@ struct CoordinateInputView: View {
             }
         }
         .sheet(isPresented: $showingInput) {
-            CoordinateInputSheet(viewModel: viewModel)
+            CoordinateInputSheet(viewModel: viewModel, isPresented: $showingInput)
         }
     }
 }
 
 struct CoordinateInputSheet: View {
     @ObservedObject var viewModel: BrainAtlasViewModel
-    @Environment(\.dismiss) private var dismiss
+    @Binding var isPresented: Bool
     
     @State private var xInput = ""
     @State private var yInput = ""
@@ -46,7 +46,7 @@ struct CoordinateInputSheet: View {
                 Button("Go to Coordinate") {
                     if let x = Int(xInput), let y = Int(yInput), let z = Int(zInput) {
                         viewModel.goToCoordinate(MNICoordinate(x: x, y: y, z: z))
-                        dismiss()
+                        isPresented = false
                     }
                 }
                 .buttonStyle(.borderedProminent)
@@ -55,10 +55,14 @@ struct CoordinateInputSheet: View {
                 Spacer()
             }
             .navigationTitle("Coordinates")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Cancel") { dismiss() }
+                ToolbarItem(placement: .automatic) {
+                    Button("Cancel") {
+                        isPresented = false
+                    }
                 }
             }
         }
@@ -84,7 +88,6 @@ struct CoordinateTextField: View {
             
             TextField("0", text: $value)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
-                .keyboardType(.numbersAndPunctuation)
         }
     }
 }

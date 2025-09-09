@@ -24,14 +24,19 @@ struct SliceNavigationView: View {
                 }
                 .disabled(!viewModel.canGoPrevious)
                 
-                Slider(
-                    value: Binding(
-                        get: { Double(viewModel.currentSliceIndex) },
-                        set: { viewModel.setSliceIndex(Int($0)) }
-                    ),
-                    in: 0...Double(max(0, viewModel.totalSlicesInCurrentPlane - 1)),
-                    step: 1
-                )
+                if viewModel.totalSlicesInCurrentPlane > 0 {
+                    Slider(
+                        value: Binding(
+                            get: { Double(viewModel.currentSliceIndex) },
+                            set: { viewModel.setSliceIndex(Int($0)) }
+                        ),
+                        in: 0...Double(viewModel.totalSlicesInCurrentPlane - 1),
+                        step: 1
+                    )
+                } else {
+                    Slider(value: .constant(0), in: 0...1)
+                        .disabled(true)
+                }
                 
                 Button(action: viewModel.nextSlice) {
                     Image(systemName: "chevron.right")

@@ -14,7 +14,7 @@ struct PlaneSelector: View {
                     Text(plane.displayName).tag(plane)
                 }
             }
-            .pickerStyle(SegmentedPickerStyle())
+            .pickerStyle(.segmented)
         }
     }
 }

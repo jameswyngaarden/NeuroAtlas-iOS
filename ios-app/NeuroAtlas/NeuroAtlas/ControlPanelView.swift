@@ -16,10 +16,10 @@ struct ControlPanelView: View {
             CoordinateInputView(viewModel: viewModel)
         }
         .padding()
-        .background(Color(.systemBackground))
+        .background(.background)
         .overlay(
             Rectangle()
-                .fill(Color(.separator))
+                .fill(Color.gray.opacity(0.3))
                 .frame(height: 0.5),
             alignment: .top
         )
