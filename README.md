@@ -187,7 +187,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Contact
 
 **Project Creator**: Jimmy Wyngaarden  
-**Email**: james.wyngaarden@temple.edu
+**Email**: james.wyngaarden@temple.edu   
 **LinkedIn**: [[LinkedIn Profile]](https://www.linkedin.com/in/jimmy-wyngaarden-00233877/)  
 **Portfolio**: [[Website]](https://jameswyngaarden.github.io/)
 
