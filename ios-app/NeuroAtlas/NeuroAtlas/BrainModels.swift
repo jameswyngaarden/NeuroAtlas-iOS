@@ -47,9 +47,7 @@ struct BrainSlice: Codable, Identifiable {
     let imagePath: String
     
     var imageURL: URL {
-        // For now, we'll use placeholder URLs
-        // Later we'll configure this to point to your hosted images
-        URL(string: "https://your-server.com/slices/\(plane.rawValue)/\(imageFilename)")!
+        URL(string: "https://jameswyngaarden.github.io/NeuroAtlas-iOS/slices/\(plane.rawValue)/\(imageFilename)")!
     }
     
     private enum CodingKeys: String, CodingKey {
