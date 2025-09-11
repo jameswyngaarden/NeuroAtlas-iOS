@@ -23,5 +23,16 @@ struct ControlPanelView: View {
                 .frame(height: 0.5),
             alignment: .top
         )
+        // Crosshair toggle
+        HStack {
+            Text("Show Crosshair")
+                .font(.headline)
+            
+            Spacer()
+            
+            Toggle("", isOn: $viewModel.showCrosshair)
+                .labelsHidden()
+        }
     }
 }
+

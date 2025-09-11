@@ -6,7 +6,7 @@ import SwiftUI
 
 struct MNICoordinate: Codable, Equatable {
     let x: Int
-    let y: Int  
+    let y: Int
     let z: Int
     
     static let zero = MNICoordinate(x: 0, y: 0, z: 0)
@@ -72,6 +72,21 @@ struct CoordinateBounds: Codable {
         case zMin = "z_min"
         case zMax = "z_max"
     }
+}
+
+// MARK: - Brain Region Models
+
+struct BrainRegion: Codable, Identifiable {
+    let id: Int
+    let name: String
+    let category: String
+    let probability: Float?
+    let description: String?
+}
+
+struct RegionLookupResponse: Codable {
+    let coordinate: String
+    let regions: [BrainRegion]
 }
 
 // MARK: - API Response Models

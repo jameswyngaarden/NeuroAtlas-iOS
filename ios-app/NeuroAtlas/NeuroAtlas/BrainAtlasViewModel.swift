@@ -11,6 +11,8 @@ class BrainAtlasViewModel: ObservableObject {
             updateCurrentSlice()
         }
     }
+    @Published var currentRegions: [BrainRegion] = []
+    @Published var selectedRegion: BrainRegion?
     
     @Published var currentCoordinate = MNICoordinate.zero
     @Published var currentSlice: BrainSlice?
@@ -81,7 +83,23 @@ class BrainAtlasViewModel: ObservableObject {
         updateCoordinate(mniCoordinate)
         updateCrosshair(at: location)
         
-        // TODO: Add haptic feedback later
+        // Look up brain regions at this coordinate
+        Task {
+            do {
+                let regions = try await dataService.lookupRegions(at: mniCoordinate)
+                currentRegions = regions
+                selectedRegion = regions.first
+                
+                print("Found \(regions.count) regions at \(mniCoordinate)")
+                for region in regions {
+                    print("   - \(region.name) (\(region.category))")
+                }
+            } catch {
+                print("Error looking up regions: \(error)")
+                currentRegions = []
+                selectedRegion = nil
+            }
+        }
     }
     
     func handleDrag(at location: CGPoint, containerSize: CGSize) {
