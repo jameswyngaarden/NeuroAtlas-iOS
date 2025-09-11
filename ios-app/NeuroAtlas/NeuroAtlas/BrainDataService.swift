@@ -5,17 +5,35 @@ class BrainDataService {
     private let baseURL = "https://your-server.com" // We'll configure this later
     
     func loadCoordinateMappings() async throws -> CoordinateMappings {
-        // For now, we'll load from a local JSON file
-        // Later we'll switch to loading from your hosted data
+        print("🔍 Starting to load coordinate mappings...")
         
-        guard let url = Bundle.main.url(forResource: "coordinate_mappings", withExtension: "json") else {
-            throw BrainDataError.fileNotFound
+        guard let url = URL(string: "https://jameswyngaarden.github.io/NeuroAtlas-iOS/coordinate_mappings.json") else {
+            print("❌ Invalid URL")
+            throw BrainDataError.invalidData
         }
         
-        let data = try Data(contentsOf: url)
-        let mappings = try JSONDecoder().decode(CoordinateMappings.self, from: data)
+        print("📡 Fetching data from: \(url)")
         
-        return mappings
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                print("📊 HTTP Status: \(httpResponse.statusCode)")
+            }
+            
+            print("📄 Data size: \(data.count) bytes")
+            
+            let mappings = try JSONDecoder().decode(CoordinateMappings.self, from: data)
+            print("✅ Successfully decoded mappings")
+            print("📊 Sagittal slices: \(mappings.sagittal.count)")
+            print("📊 Coronal slices: \(mappings.coronal.count)")
+            print("📊 Axial slices: \(mappings.axial.count)")
+            
+            return mappings
+        } catch {
+            print("❌ Error loading coordinate mappings: \(error)")
+            throw error
+        }
     }
     
     func loadSliceImage(for slice: BrainSlice) async throws -> Data {
