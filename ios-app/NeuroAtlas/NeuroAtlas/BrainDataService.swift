@@ -2,12 +2,12 @@
 import Foundation
 
 class BrainDataService {
-    private let baseURL = "https://your-server.com" // We'll configure this later
+    private let baseURL = "http://localhost:8000" // Local server for testing
     
     func loadCoordinateMappings() async throws -> CoordinateMappings {
         print("🔍 Starting to load coordinate mappings...")
         
-        guard let url = URL(string: "https://jameswyngaarden.github.io/NeuroAtlas-iOS/coordinate_mappings.json") else {
+        guard let url = URL(string: "http://localhost:8000/coordinate_mappings.json") else {
             print("❌ Invalid URL")
             throw BrainDataError.invalidData
         }

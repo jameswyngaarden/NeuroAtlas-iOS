@@ -11,6 +11,7 @@ struct BrainSliceView: View {
             image
                 .resizable()
                 .aspectRatio(contentMode: .fit)
+                .rotationEffect(.degrees(180)) // Flip the image 180 degrees
                 .onTapGesture { location in
                     viewModel.handleTap(at: location, containerSize: containerSize)
                 }

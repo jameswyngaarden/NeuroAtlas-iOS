@@ -4,24 +4,22 @@ import SwiftUI
 
 struct CoordinateTransformer {
     static func screenToMNI(screenPoint: CGPoint, containerSize: CGSize, slice: BrainSlice) -> MNICoordinate {
-        // Convert screen coordinates to normalized coordinates (0-1)
-        let normalizedX = screenPoint.x / containerSize.width
-        let normalizedY = screenPoint.y / containerSize.height
+        // Account for 180-degree rotation - invert both X and Y
+        let flippedX = containerSize.width - screenPoint.x
+        let flippedY = containerSize.height - screenPoint.y
         
-        // Convert to slice pixel coordinates
+        // Convert to normalized coordinates (0-1)
+        let normalizedX = flippedX / containerSize.width
+        let normalizedY = flippedY / containerSize.height
+        
+        // Rest of the function stays the same...
         let sliceWidth = Double(slice.sliceShape[0])
         let sliceHeight = Double(slice.sliceShape[1])
         
         let pixelX = normalizedX * sliceWidth
-        let pixelY = (1.0 - normalizedY) * sliceHeight // Flip Y axis
+        let pixelY = (1.0 - normalizedY) * sliceHeight
         
-        // Use affine transformation to convert to MNI coordinates
-        let affine = slice.affineTransform
-        
-        // This is a simplified transformation - you'll need to implement the full matrix math
-        // For now, we'll estimate based on the slice position and bounds
         let bounds = slice.bounds
-        
         let mniX: Int
         let mniY: Int
         let mniZ: Int
