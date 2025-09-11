@@ -1,0 +1,428 @@
+[
+  {
+    "id": 1,
+    "name": "Frontal Pole",
+    "category": "cortical",
+    "description": "Cortical region: Frontal Pole"
+  },
+  {
+    "id": 2,
+    "name": "Insular Cortex",
+    "category": "cortical",
+    "description": "Cortical region: Insular Cortex"
+  },
+  {
+    "id": 3,
+    "name": "Superior Frontal Gyrus",
+    "category": "cortical",
+    "description": "Cortical region: Superior Frontal Gyrus"
+  },
+  {
+    "id": 4,
+    "name": "Middle Frontal Gyrus",
+    "category": "cortical",
+    "description": "Cortical region: Middle Frontal Gyrus"
+  },
+  {
+    "id": 5,
+    "name": "Inferior Frontal Gyrus, pars triangularis",
+    "category": "cortical",
+    "description": "Cortical region: Inferior Frontal Gyrus, pars triangularis"
+  },
+  {
+    "id": 6,
+    "name": "Inferior Frontal Gyrus, pars opercularis",
+    "category": "cortical",
+    "description": "Cortical region: Inferior Frontal Gyrus, pars opercularis"
+  },
+  {
+    "id": 7,
+    "name": "Precentral Gyrus",
+    "category": "cortical",
+    "description": "Cortical region: Precentral Gyrus"
+  },
+  {
+    "id": 8,
+    "name": "Temporal Pole",
+    "category": "cortical",
+    "description": "Cortical region: Temporal Pole"
+  },
+  {
+    "id": 9,
+    "name": "Superior Temporal Gyrus, anterior division",
+    "category": "cortical",
+    "description": "Cortical region: Superior Temporal Gyrus, anterior division"
+  },
+  {
+    "id": 10,
+    "name": "Superior Temporal Gyrus, posterior division",
+    "category": "cortical",
+    "description": "Cortical region: Superior Temporal Gyrus, posterior division"
+  },
+  {
+    "id": 11,
+    "name": "Middle Temporal Gyrus, anterior division",
+    "category": "cortical",
+    "description": "Cortical region: Middle Temporal Gyrus, anterior division"
+  },
+  {
+    "id": 12,
+    "name": "Middle Temporal Gyrus, posterior division",
+    "category": "cortical",
+    "description": "Cortical region: Middle Temporal Gyrus, posterior division"
+  },
+  {
+    "id": 13,
+    "name": "Middle Temporal Gyrus, temporooccipital part",
+    "category": "cortical",
+    "description": "Cortical region: Middle Temporal Gyrus, temporooccipital part"
+  },
+  {
+    "id": 14,
+    "name": "Inferior Temporal Gyrus, anterior division",
+    "category": "cortical",
+    "description": "Cortical region: Inferior Temporal Gyrus, anterior division"
+  },
+  {
+    "id": 15,
+    "name": "Inferior Temporal Gyrus, posterior division",
+    "category": "cortical",
+    "description": "Cortical region: Inferior Temporal Gyrus, posterior division"
+  },
+  {
+    "id": 16,
+    "name": "Inferior Temporal Gyrus, temporooccipital part",
+    "category": "cortical",
+    "description": "Cortical region: Inferior Temporal Gyrus, temporooccipital part"
+  },
+  {
+    "id": 17,
+    "name": "Postcentral Gyrus",
+    "category": "cortical",
+    "description": "Cortical region: Postcentral Gyrus"
+  },
+  {
+    "id": 18,
+    "name": "Superior Parietal Lobule",
+    "category": "cortical",
+    "description": "Cortical region: Superior Parietal Lobule"
+  },
+  {
+    "id": 19,
+    "name": "Supramarginal Gyrus, anterior division",
+    "category": "cortical",
+    "description": "Cortical region: Supramarginal Gyrus, anterior division"
+  },
+  {
+    "id": 20,
+    "name": "Supramarginal Gyrus, posterior division",
+    "category": "cortical",
+    "description": "Cortical region: Supramarginal Gyrus, posterior division"
+  },
+  {
+    "id": 21,
+    "name": "Angular Gyrus",
+    "category": "cortical",
+    "description": "Cortical region: Angular Gyrus"
+  },
+  {
+    "id": 22,
+    "name": "Lateral Occipital Cortex, superior division",
+    "category": "cortical",
+    "description": "Cortical region: Lateral Occipital Cortex, superior division"
+  },
+  {
+    "id": 23,
+    "name": "Lateral Occipital Cortex, inferior division",
+    "category": "cortical",
+    "description": "Cortical region: Lateral Occipital Cortex, inferior division"
+  },
+  {
+    "id": 24,
+    "name": "Intracalcarine Cortex",
+    "category": "cortical",
+    "description": "Cortical region: Intracalcarine Cortex"
+  },
+  {
+    "id": 25,
+    "name": "Frontal Medial Cortex",
+    "category": "cortical",
+    "description": "Cortical region: Frontal Medial Cortex"
+  },
+  {
+    "id": 26,
+    "name": "Juxtapositional Lobule Cortex (formerly Supplementary Motor Cortex)",
+    "category": "cortical",
+    "description": "Cortical region: Juxtapositional Lobule Cortex (formerly Supplementary Motor Cortex)"
+  },
+  {
+    "id": 27,
+    "name": "Subcallosal Cortex",
+    "category": "cortical",
+    "description": "Cortical region: Subcallosal Cortex"
+  },
+  {
+    "id": 28,
+    "name": "Paracingulate Gyrus",
+    "category": "cortical",
+    "description": "Cortical region: Paracingulate Gyrus"
+  },
+  {
+    "id": 29,
+    "name": "Cingulate Gyrus, anterior division",
+    "category": "cortical",
+    "description": "Cortical region: Cingulate Gyrus, anterior division"
+  },
+  {
+    "id": 30,
+    "name": "Cingulate Gyrus, posterior division",
+    "category": "cortical",
+    "description": "Cortical region: Cingulate Gyrus, posterior division"
+  },
+  {
+    "id": 31,
+    "name": "Precuneous Cortex",
+    "category": "cortical",
+    "description": "Cortical region: Precuneous Cortex"
+  },
+  {
+    "id": 32,
+    "name": "Cuneal Cortex",
+    "category": "cortical",
+    "description": "Cortical region: Cuneal Cortex"
+  },
+  {
+    "id": 33,
+    "name": "Frontal Orbital Cortex",
+    "category": "cortical",
+    "description": "Cortical region: Frontal Orbital Cortex"
+  },
+  {
+    "id": 34,
+    "name": "Parahippocampal Gyrus, anterior division",
+    "category": "cortical",
+    "description": "Cortical region: Parahippocampal Gyrus, anterior division"
+  },
+  {
+    "id": 35,
+    "name": "Parahippocampal Gyrus, posterior division",
+    "category": "cortical",
+    "description": "Cortical region: Parahippocampal Gyrus, posterior division"
+  },
+  {
+    "id": 36,
+    "name": "Lingual Gyrus",
+    "category": "cortical",
+    "description": "Cortical region: Lingual Gyrus"
+  },
+  {
+    "id": 37,
+    "name": "Temporal Fusiform Cortex, anterior division",
+    "category": "cortical",
+    "description": "Cortical region: Temporal Fusiform Cortex, anterior division"
+  },
+  {
+    "id": 38,
+    "name": "Temporal Fusiform Cortex, posterior division",
+    "category": "cortical",
+    "description": "Cortical region: Temporal Fusiform Cortex, posterior division"
+  },
+  {
+    "id": 39,
+    "name": "Temporal Occipital Fusiform Cortex",
+    "category": "cortical",
+    "description": "Cortical region: Temporal Occipital Fusiform Cortex"
+  },
+  {
+    "id": 40,
+    "name": "Occipital Fusiform Gyrus",
+    "category": "cortical",
+    "description": "Cortical region: Occipital Fusiform Gyrus"
+  },
+  {
+    "id": 41,
+    "name": "Frontal Operculum Cortex",
+    "category": "cortical",
+    "description": "Cortical region: Frontal Operculum Cortex"
+  },
+  {
+    "id": 42,
+    "name": "Central Opercular Cortex",
+    "category": "cortical",
+    "description": "Cortical region: Central Opercular Cortex"
+  },
+  {
+    "id": 43,
+    "name": "Parietal Operculum Cortex",
+    "category": "cortical",
+    "description": "Cortical region: Parietal Operculum Cortex"
+  },
+  {
+    "id": 44,
+    "name": "Planum Polare",
+    "category": "cortical",
+    "description": "Cortical region: Planum Polare"
+  },
+  {
+    "id": 45,
+    "name": "Heschl's Gyrus (includes H1 and H2)",
+    "category": "cortical",
+    "description": "Cortical region: Heschl's Gyrus (includes H1 and H2)"
+  },
+  {
+    "id": 46,
+    "name": "Planum Temporale",
+    "category": "cortical",
+    "description": "Cortical region: Planum Temporale"
+  },
+  {
+    "id": 47,
+    "name": "Supracalcarine Cortex",
+    "category": "cortical",
+    "description": "Cortical region: Supracalcarine Cortex"
+  },
+  {
+    "id": 48,
+    "name": "Occipital Pole",
+    "category": "cortical",
+    "description": "Cortical region: Occipital Pole"
+  },
+  {
+    "id": 1001,
+    "name": "Left Cerebral White Matter",
+    "category": "subcortical",
+    "description": "Subcortical region: Left Cerebral White Matter"
+  },
+  {
+    "id": 1002,
+    "name": "Left Cerebral Cortex",
+    "category": "subcortical",
+    "description": "Subcortical region: Left Cerebral Cortex"
+  },
+  {
+    "id": 1003,
+    "name": "Left Lateral Ventricle",
+    "category": "subcortical",
+    "description": "Subcortical region: Left Lateral Ventricle"
+  },
+  {
+    "id": 1004,
+    "name": "Left Thalamus",
+    "category": "subcortical",
+    "description": "Subcortical region: Left Thalamus"
+  },
+  {
+    "id": 1005,
+    "name": "Left Caudate",
+    "category": "subcortical",
+    "description": "Subcortical region: Left Caudate"
+  },
+  {
+    "id": 1006,
+    "name": "Left Putamen",
+    "category": "subcortical",
+    "description": "Subcortical region: Left Putamen"
+  },
+  {
+    "id": 1007,
+    "name": "Left Pallidum",
+    "category": "subcortical",
+    "description": "Subcortical region: Left Pallidum"
+  },
+  {
+    "id": 1008,
+    "name": "3rd Ventricle",
+    "category": "subcortical",
+    "description": "Subcortical region: 3rd Ventricle"
+  },
+  {
+    "id": 1009,
+    "name": "4th Ventricle",
+    "category": "subcortical",
+    "description": "Subcortical region: 4th Ventricle"
+  },
+  {
+    "id": 1010,
+    "name": "Brain Stem",
+    "category": "subcortical",
+    "description": "Subcortical region: Brain Stem"
+  },
+  {
+    "id": 1011,
+    "name": "Left Hippocampus",
+    "category": "subcortical",
+    "description": "Subcortical region: Left Hippocampus"
+  },
+  {
+    "id": 1012,
+    "name": "Left Amygdala",
+    "category": "subcortical",
+    "description": "Subcortical region: Left Amygdala"
+  },
+  {
+    "id": 1013,
+    "name": "Left Accumbens",
+    "category": "subcortical",
+    "description": "Subcortical region: Left Accumbens"
+  },
+  {
+    "id": 1014,
+    "name": "Right Cerebral White Matter",
+    "category": "subcortical",
+    "description": "Subcortical region: Right Cerebral White Matter"
+  },
+  {
+    "id": 1015,
+    "name": "Right Cerebral Cortex",
+    "category": "subcortical",
+    "description": "Subcortical region: Right Cerebral Cortex"
+  },
+  {
+    "id": 1016,
+    "name": "Right Lateral Ventricle",
+    "category": "subcortical",
+    "description": "Subcortical region: Right Lateral Ventricle"
+  },
+  {
+    "id": 1017,
+    "name": "Right Thalamus",
+    "category": "subcortical",
+    "description": "Subcortical region: Right Thalamus"
+  },
+  {
+    "id": 1018,
+    "name": "Right Caudate",
+    "category": "subcortical",
+    "description": "Subcortical region: Right Caudate"
+  },
+  {
+    "id": 1019,
+    "name": "Right Putamen",
+    "category": "subcortical",
+    "description": "Subcortical region: Right Putamen"
+  },
+  {
+    "id": 1020,
+    "name": "Right Pallidum",
+    "category": "subcortical",
+    "description": "Subcortical region: Right Pallidum"
+  },
+  {
+    "id": 1021,
+    "name": "Right Hippocampus",
+    "category": "subcortical",
+    "description": "Subcortical region: Right Hippocampus"
+  },
+  {
+    "id": 1022,
+    "name": "Right Amygdala",
+    "category": "subcortical",
+    "description": "Subcortical region: Right Amygdala"
+  },
+  {
+    "id": 1023,
+    "name": "Right Accumbens",
+    "category": "subcortical",
+    "description": "Subcortical region: Right Accumbens"
+  }
+]
