@@ -11,18 +11,19 @@ struct BrainSliceView: View {
             image
                 .resizable()
                 .aspectRatio(contentMode: .fit)
+                // .rotationEffect(.degrees(180))
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipped()
                 .onTapGesture { location in
-                    viewModel.handleTap(at: location, containerSize: containerSize)
+                    // Use the image's actual frame size for coordinate calculation
+                    let imageFrame = CGRect(origin: .zero, size: containerSize)
+                    viewModel.handleTap(at: location, containerSize: imageFrame.size)
                 }
-                .gesture(
-                    DragGesture(minimumDistance: 0)
-                        .onChanged { value in
-                            viewModel.handleDrag(at: value.location, containerSize: containerSize)
-                        }
-                )
+                // ... rest of gesture handling
         } placeholder: {
             Rectangle()
                 .fill(Color.gray.opacity(0.3))
+                .aspectRatio(1.0, contentMode: .fit) // Force consistent aspect ratio
                 .overlay(
                     ProgressView()
                         .tint(.white)

@@ -51,8 +51,13 @@ struct BrainSlice: Codable, Identifiable {
     }
     
     private enum CodingKeys: String, CodingKey {
-        case plane, sliceShape, voxelCoordinates, affineTransform, bounds, description, imageFilename, imagePath
+        case plane, bounds, description
         case mniPosition = "mni_position"
+        case sliceShape = "slice_shape"
+        case voxelCoordinates = "voxel_coordinates"
+        case affineTransform = "affine_transform"
+        case imageFilename = "image_filename"
+        case imagePath = "image_path"
     }
 }
 

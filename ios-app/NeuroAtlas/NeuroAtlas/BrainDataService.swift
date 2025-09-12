@@ -2,12 +2,6 @@
 import Foundation
 
 class BrainDataService {
-<<<<<<< Updated upstream
-    private let baseURL = "https://your-server.com" // We'll configure this later
-    
-    func loadCoordinateMappings() async throws -> CoordinateMappings {
-        guard let url = URL(string: "https://jameswyngaarden.github.io/NeuroAtlas-iOS/coordinate_mappings.json") else {
-=======
     private let baseURL = "https://jameswyngaarden.github.io/NeuroAtlas-iOS"
     
     func loadCoordinateMappings() async throws -> CoordinateMappings {
@@ -15,14 +9,31 @@ class BrainDataService {
         
         guard let url = URL(string: "\(baseURL)/coordinate_mappings.json") else {
             print("❌ Invalid URL")
->>>>>>> Stashed changes
             throw BrainDataError.invalidData
         }
         
-        let (data, _) = try await URLSession.shared.data(from: url)
-        let mappings = try JSONDecoder().decode(CoordinateMappings.self, from: data)
+        print("📡 Fetching data from: \(url)")
         
-        return mappings
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                print("📊 HTTP Status: \(httpResponse.statusCode)")
+            }
+            
+            print("📄 Data size: \(data.count) bytes")
+            
+            let mappings = try JSONDecoder().decode(CoordinateMappings.self, from: data)
+            print("✅ Successfully decoded mappings")
+            print("📊 Sagittal slices: \(mappings.sagittal.count)")
+            print("📊 Coronal slices: \(mappings.coronal.count)")
+            print("📊 Axial slices: \(mappings.axial.count)")
+            
+            return mappings
+        } catch {
+            print("❌ Error loading coordinate mappings: \(error)")
+            throw error
+        }
     }
     
     func lookupRegions(at coordinate: MNICoordinate) async throws -> [BrainRegion] {

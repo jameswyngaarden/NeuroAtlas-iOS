@@ -1,4 +1,4 @@
-// BrainViewerContainer.swift - Main brain image viewer
+// BrainViewerContainer.swift - Main brain image viewer with consistent sizing
 import SwiftUI
 
 struct BrainViewerContainer: View {
@@ -15,7 +15,7 @@ struct BrainViewerContainer: View {
                     BrainSliceView(
                         slice: currentSlice,
                         viewModel: viewModel,
-                        containerSize: geometry.size
+                        containerSize: CGSize(width: geometry.size.width, height: geometry.size.width)
                     )
                 } else {
                     // Loading state
@@ -36,6 +36,7 @@ struct BrainViewerContainer: View {
                 }
             }
         }
+        .aspectRatio(1.0, contentMode: .fit)
         .clipped()
         .onAppear {
             viewModel.loadInitialData()
