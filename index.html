@@ -80,16 +80,18 @@
             transform: translateY(-5px);
         }
 
-        .feature-icon {
-            font-size: 2rem;
-            margin-bottom: 15px;
-        }
-
         .feature-title {
             font-size: 1.5rem;
             font-weight: 600;
             color: #2c3e50;
             margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .feature-icon {
+            font-size: 1.5rem;
         }
 
         .feature-subtitle {
@@ -182,8 +184,10 @@
 
         <div class="features">
             <div class="feature-card">
-                <div class="feature-icon">📱</div>
-                <h2 class="feature-title">iOS Application</h2>
+                <h2 class="feature-title">
+                    <span class="feature-icon">📱</span>
+                    iOS Application
+                </h2>
                 <p class="feature-subtitle">Native iOS app built with SwiftUI featuring:</p>
                 <ul class="feature-list">
                     <li>Touch-based coordinate exploration</li>
@@ -194,8 +198,10 @@
             </div>
 
             <div class="feature-card">
-                <div class="feature-icon">🧬</div>
-                <h2 class="feature-title">Scientific Data</h2>
+                <h2 class="feature-title">
+                    <span class="feature-icon">🧬</span>
+                    Scientific Data
+                </h2>
                 <p class="feature-subtitle">Industry-standard neuroimaging datasets:</p>
                 <ul class="feature-list">
                     <li>MNI152 T1-weighted template (1mm resolution)</li>
@@ -206,8 +212,10 @@
             </div>
 
             <div class="feature-card">
-                <div class="feature-icon">⚙️</div>
-                <h2 class="feature-title">Technical Stack</h2>
+                <h2 class="feature-title">
+                    <span class="feature-icon">⚙️</span>
+                    Technical Stack
+                </h2>
                 <p class="feature-subtitle">Modern development practices:</p>
                 <ul class="feature-list">
                     <li>Swift & SwiftUI for iOS development</li>
