@@ -27,7 +27,6 @@
 		AD1D92C82E70E02600F29E60 /* NeuroAtlas.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NeuroAtlas.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AD1D92D62E70E02800F29E60 /* NeuroAtlasTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NeuroAtlasTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AD1D92E02E70E02800F29E60 /* NeuroAtlasUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NeuroAtlasUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		AD9F55022E79494F004618CA /* NeuroAtlas.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = NeuroAtlas.xcodeproj; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -89,13 +88,6 @@
 				AD1D92C82E70E02600F29E60 /* NeuroAtlas.app */,
 				AD1D92D62E70E02800F29E60 /* NeuroAtlasTests.xctest */,
 				AD1D92E02E70E02800F29E60 /* NeuroAtlasUITests.xctest */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
-		AD9F55032E79494F004618CA /* Products */ = {
-			isa = PBXGroup;
-			children = (
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -206,12 +198,6 @@
 			preferredProjectObjectVersion = 77;
 			productRefGroup = AD1D92C92E70E02600F29E60 /* Products */;
 			projectDirPath = "";
-			projectReferences = (
-				{
-					ProductGroup = AD9F55032E79494F004618CA /* Products */;
-					ProjectRef = AD9F55022E79494F004618CA /* NeuroAtlas.xcodeproj */;
-				},
-			);
 			projectRoot = "";
 			targets = (
 				AD1D92C72E70E02600F29E60 /* NeuroAtlas */,

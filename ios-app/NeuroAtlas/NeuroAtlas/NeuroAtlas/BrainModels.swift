@@ -47,12 +47,18 @@ struct BrainSlice: Codable, Identifiable {
     let imagePath: String
     
     var imageURL: URL {
-        URL(string: "https://jameswyngaarden.github.io/NeuroAtlas-iOS/slices/\(plane.rawValue)/\(imageFilename)")!
+        URL(string: "https://jameswyngaarden.github.io/NeuroAtlas-Images/slices/\(plane.rawValue)/\(imageFilename)")!
     }
     
     private enum CodingKeys: String, CodingKey {
-        case plane, sliceShape, voxelCoordinates, affineTransform, bounds, description, imageFilename, imagePath
+        case plane
         case mniPosition = "mni_position"
+        case sliceShape = "slice_shape"
+        case voxelCoordinates = "voxel_coordinates"
+        case affineTransform = "affine_transform"
+        case bounds, description
+        case imageFilename = "image_filename"
+        case imagePath = "image_path"
     }
 }
 
