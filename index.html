@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroAtlas - Interactive Neuroanatomy Learning Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .logo {
+            margin-bottom: 20px;
+        }
+
+        .logo img {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .title {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+
+        .description {
+            font-size: 1.1rem;
+            color: #555;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .feature-subtitle {
+            font-size: 1rem;
+            color: #7f8c8d;
+            margin-bottom: 15px;
+        }
+
+        .feature-list {
+            list-style: none;
+        }
+
+        .feature-list li {
+            padding: 5px 0;
+            color: #555;
+        }
+
+        .feature-list li:before {
+            content: "•";
+            color: #3498db;
+            font-weight: bold;
+            display: inline-block;
+            width: 1em;
+            margin-left: -1em;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 60px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 30px 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #3498db;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+
+        .footer {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .features {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .title {
+                font-size: 2rem;
+            }
+            
+            .subtitle {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <img src="ios-app/NeuroAtlas-iOS_favicon.png" alt="NeuroAtlas Logo">
+            </div>
+            <h1 class="title">NeuroAtlas</h1>
+            <p class="subtitle">Interactive Neuroanatomy Learning Platform</p>
+            <p class="description">High-resolution MNI152 brain atlas with complete coordinate coverage</p>
+        </header>
+
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <h2 class="feature-title">iOS Application</h2>
+                <p class="feature-subtitle">Native iOS app built with SwiftUI featuring:</p>
+                <ul class="feature-list">
+                    <li>Touch-based coordinate exploration</li>
+                    <li>Real-time MNI coordinate mapping</li>
+                    <li>Three anatomical planes (sagittal, coronal, axial)</li>
+                    <li>Professional MVVM architecture</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🧬</div>
+                <h2 class="feature-title">Scientific Data</h2>
+                <p class="feature-subtitle">Industry-standard neuroimaging datasets:</p>
+                <ul class="feature-list">
+                    <li>MNI152 T1-weighted template (1mm resolution)</li>
+                    <li>Complete coordinate space coverage</li>
+                    <li>Harvard-Oxford atlas integration ready</li>
+                    <li>Python-based data processing pipeline</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">⚙️</div>
+                <h2 class="feature-title">Technical Stack</h2>
+                <p class="feature-subtitle">Modern development practices:</p>
+                <ul class="feature-list">
+                    <li>Swift & SwiftUI for iOS development</li>
+                    <li>Python with nibabel for neuroimaging</li>
+                    <li>RESTful API design patterns</li>
+                    <li>Git workflow with proper documentation</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">182</div>
+                <div class="stat-label">Sagittal Slices</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">218</div>
+                <div class="stat-label">Coronal Slices</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">182</div>
+                <div class="stat-label">Axial Slices</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">582</div>
+                <div class="stat-label">Total Images</div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>Built with ❤️ for neuroscience education and iOS development learning</p>
+        </footer>
+    </div>
+</body>
+</html>
