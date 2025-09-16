@@ -48,18 +48,36 @@ class BrainDataService {
         print("📍 Snapped to 2mm grid: \(snappedCoord)")
         
         let coordKey = "\(snappedCoord.x),\(snappedCoord.y),\(snappedCoord.z)"
+        print("🔑 Lookup key: \(coordKey)")
         
         guard let url = URL(string: "\(baseURL)/harvard_oxford_lookup_2mm.json") else {
+            print("❌ Invalid URL for harvard_oxford_lookup")
             throw BrainDataError.invalidData
         }
         
+        print("📡 Fetching from: \(url)")
+        
         do {
-            let (data, _) = try await URLSession.shared.data(from: url)
+            let (data, response) = try await URLSession.shared.data(from: url)
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                print("📊 HTTP Status: \(httpResponse.statusCode)")
+                if httpResponse.statusCode != 200 {
+                    print("❌ Non-200 status code")
+                    throw BrainDataError.networkError
+                }
+            }
+            
+            print("📄 Data size: \(data.count) bytes")
+            
+            // Try to decode the lookup table
             let lookupTable = try JSONDecoder().decode([String: [BrainRegion]].self, from: data)
+            print("✅ Successfully decoded lookup table with \(lookupTable.count) entries")
             
             let regions = lookupTable[coordKey] ?? []
             
             if regions.isEmpty {
+                print("📍 No regions found at \(coordKey), returning background")
                 let backgroundRegion = BrainRegion(
                     id: 0,
                     name: "Background / CSF / White Matter",
@@ -67,7 +85,6 @@ class BrainDataService {
                     probability: 1.0,
                     description: "Area outside labeled cortical/subcortical regions"
                 )
-                print("📍 Found background region at \(coordKey)")
                 return [backgroundRegion]
             } else {
                 print("📍 Found \(regions.count) regions at \(coordKey)")
@@ -76,6 +93,17 @@ class BrainDataService {
                 }
                 return regions
             }
+        } catch DecodingError.keyNotFound(let key, let context) {
+            print("❌ Decoding error - missing key: \(key)")
+            print("   Context: \(context)")
+            throw error
+        } catch DecodingError.typeMismatch(let type, let context) {
+            print("❌ Decoding error - type mismatch: \(type)")
+            print("   Context: \(context)")
+            throw error
+        } catch {
+            print("❌ Error looking up regions: \(error)")
+            throw error
         } catch {
             print("❌ Error looking up regions: \(error)")
             throw error

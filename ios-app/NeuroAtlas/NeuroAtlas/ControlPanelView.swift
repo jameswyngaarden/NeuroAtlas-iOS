@@ -15,7 +15,7 @@ struct ControlPanelView: View {
             // Coordinate input
             CoordinateInputView(viewModel: viewModel)
             
-            // Crosshair toggle - moved to be more prominent
+            // Crosshair toggle - MOVED INSIDE THE VSTACK
             HStack {
                 Text("Show Crosshair")
                     .font(.headline)
@@ -25,6 +25,7 @@ struct ControlPanelView: View {
                 Toggle("", isOn: $viewModel.showCrosshair)
                     .labelsHidden()
             }
+            .padding(.horizontal)
         }
         .padding()
         .background(.background)

@@ -77,11 +77,9 @@ class BrainAtlasViewModel: ObservableObject {
     
     func handleTap(at location: CGPoint, containerSize: CGSize) {
         guard let slice = currentSlice else {
-            print("❌ DEBUG: handleTap called but no current slice")
+            print("❌ No current slice available")
             return
         }
-        
-        print("🧠 DEBUG: handleTap at location: \(location), container: \(containerSize)")
         
         // Convert tap location to MNI coordinates
         let mniCoordinate = CoordinateTransformer.screenToMNI(
@@ -90,14 +88,31 @@ class BrainAtlasViewModel: ObservableObject {
             slice: slice
         )
         
-        print("🧠 DEBUG: Converted to MNI coordinate: \(mniCoordinate)")
-        
         updateCoordinate(mniCoordinate)
         updateCrosshair(at: location)
         
         // Look up brain regions at this coordinate
         Task {
-            await performRegionLookup(at: mniCoordinate)
+            do {
+                print("🔍 Starting region lookup for \(mniCoordinate)")
+                let regions = try await dataService.lookupRegions(at: mniCoordinate)
+                
+                await MainActor.run {
+                    currentRegions = regions
+                    selectedRegion = regions.first
+                    
+                    print("✅ Updated UI with \(regions.count) regions")
+                    if let firstRegion = regions.first {
+                        print("   Selected region: \(firstRegion.name)")
+                    }
+                }
+            } catch {
+                print("❌ Error looking up regions: \(error)")
+                await MainActor.run {
+                    currentRegions = []
+                    selectedRegion = nil
+                }
+            }
         }
     }
     
