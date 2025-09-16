@@ -11,22 +11,37 @@ struct BrainSliceView: View {
             image
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .onTapGesture { location in
-                    viewModel.handleTap(at: location, containerSize: containerSize)
-                }
-                .gesture(
-                    DragGesture(minimumDistance: 0)
-                        .onChanged { value in
-                            viewModel.handleDrag(at: value.location, containerSize: containerSize)
-                        }
-                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipped()
         } placeholder: {
             Rectangle()
                 .fill(Color.gray.opacity(0.3))
+                .aspectRatio(1.0, contentMode: .fit)
                 .overlay(
                     ProgressView()
                         .tint(.white)
                 )
         }
+        // Move the gesture to the entire view, not just the image
+        .onTapGesture { location in
+            print("🔍 DEBUG: Tap detected at \(location)")
+            viewModel.handleTap(at: location, containerSize: containerSize)
+        }
+        .onDragGesture { location in
+            print("🔍 DEBUG: Drag detected at \(location)")
+            viewModel.handleDrag(at: location, containerSize: containerSize)
+        }
+    }
+}
+
+// Custom drag gesture modifier
+extension View {
+    func onDragGesture(perform action: @escaping (CGPoint) -> Void) -> some View {
+        self.gesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { value in
+                    action(value.location)
+                }
+        )
     }
 }

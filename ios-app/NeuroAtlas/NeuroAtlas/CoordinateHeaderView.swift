@@ -6,7 +6,7 @@ struct CoordinateHeaderView: View {
     
     var body: some View {
         VStack(spacing: 8) {
-            // Coordinate display
+            // Existing coordinate display
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("MNI Coordinates")
@@ -33,7 +33,7 @@ struct CoordinateHeaderView: View {
                 }
             }
             
-            // Brain region display
+            // New region display
             if let region = viewModel.selectedRegion {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
