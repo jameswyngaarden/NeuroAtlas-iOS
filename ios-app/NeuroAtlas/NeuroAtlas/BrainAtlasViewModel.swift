@@ -1,4 +1,4 @@
-// BrainAtlasViewModel.swift - Main view model managing app state
+// BrainAtlasViewModel.swift - Updated to start at sagittal +00
 import Foundation
 import SwiftUI
 import Combine
@@ -59,13 +59,12 @@ class BrainAtlasViewModel: ObservableObject {
             
             do {
                 coordinateMappings = try await dataService.loadCoordinateMappings()
+                
+                // NEW: Set default to sagittal slice closest to 0
+                setDefaultSlicePosition()
+                
                 updateCurrentSlice()
                 updateCurrentCoordinate()
-                
-                // DEBUG: Try initial region lookup
-                print("🧠 DEBUG: App loaded, attempting initial region lookup at \(currentCoordinate)")
-                await performRegionLookup(at: currentCoordinate)
-                
             } catch {
                 errorMessage = "Failed to load brain data: \(error.localizedDescription)"
                 print("❌ Error loading data: \(error)")
@@ -75,11 +74,30 @@ class BrainAtlasViewModel: ObservableObject {
         }
     }
     
-    func handleTap(at location: CGPoint, containerSize: CGSize) {
-        guard let slice = currentSlice else {
-            print("❌ No current slice available")
-            return
+    // NEW: Helper method to find sagittal slice closest to 0
+    private func setDefaultSlicePosition() {
+        guard let mappings = coordinateMappings else { return }
+        
+        let sagittalSlices = mappings.slices(for: .sagittal)
+        
+        // Find the slice closest to MNI position 0
+        var closestIndex = 0
+        var closestDistance = abs(sagittalSlices[0].mniPosition - 0)
+        
+        for (index, slice) in sagittalSlices.enumerated() {
+            let distance = abs(slice.mniPosition - 0)
+            if distance < closestDistance {
+                closestDistance = distance
+                closestIndex = index
+            }
         }
+        
+        currentSliceIndex = closestIndex
+        print("🎯 Set default slice to index \(closestIndex) (MNI position: \(sagittalSlices[closestIndex].mniPosition))")
+    }
+    
+    func handleTap(at location: CGPoint, containerSize: CGSize) {
+        guard let slice = currentSlice else { return }
         
         // Convert tap location to MNI coordinates
         let mniCoordinate = CoordinateTransformer.screenToMNI(
@@ -94,24 +112,18 @@ class BrainAtlasViewModel: ObservableObject {
         // Look up brain regions at this coordinate
         Task {
             do {
-                print("🔍 Starting region lookup for \(mniCoordinate)")
                 let regions = try await dataService.lookupRegions(at: mniCoordinate)
+                currentRegions = regions
+                selectedRegion = regions.first
                 
-                await MainActor.run {
-                    currentRegions = regions
-                    selectedRegion = regions.first
-                    
-                    print("✅ Updated UI with \(regions.count) regions")
-                    if let firstRegion = regions.first {
-                        print("   Selected region: \(firstRegion.name)")
-                    }
+                print("Found \(regions.count) regions at \(mniCoordinate)")
+                for region in regions {
+                    print("   - \(region.name) (\(region.category))")
                 }
             } catch {
-                print("❌ Error looking up regions: \(error)")
-                await MainActor.run {
-                    currentRegions = []
-                    selectedRegion = nil
-                }
+                print("Error looking up regions: \(error)")
+                currentRegions = []
+                selectedRegion = nil
             }
         }
     }
@@ -136,8 +148,6 @@ class BrainAtlasViewModel: ObservableObject {
     }
     
     func goToCoordinate(_ coordinate: MNICoordinate) {
-        print("🧠 DEBUG: goToCoordinate called with: \(coordinate)")
-        
         // Find the closest slice to this coordinate
         guard let mappings = coordinateMappings else { return }
         
@@ -161,11 +171,6 @@ class BrainAtlasViewModel: ObservableObject {
         
         // Update crosshair to show the coordinate
         showCrosshair = true
-        
-        // Look up regions at the new coordinate
-        Task {
-            await performRegionLookup(at: coordinate)
-        }
     }
     
     // MARK: - Private Methods
@@ -186,8 +191,6 @@ class BrainAtlasViewModel: ObservableObject {
     private func updateCurrentCoordinate() {
         guard let slice = currentSlice else { return }
         
-        let oldCoordinate = currentCoordinate
-        
         // Update coordinate based on current slice position
         switch currentPlane {
         case .sagittal:
@@ -197,23 +200,18 @@ class BrainAtlasViewModel: ObservableObject {
         case .axial:
             currentCoordinate = MNICoordinate(x: currentCoordinate.x, y: currentCoordinate.y, z: slice.mniPosition)
         }
-        
-        print("🧠 DEBUG: updateCurrentCoordinate from \(oldCoordinate) to \(currentCoordinate)")
     }
     
     private func updateCoordinate(_ coordinate: MNICoordinate) {
-        print("🧠 DEBUG: updateCoordinate to \(coordinate)")
         currentCoordinate = coordinate
     }
     
     private func updateCrosshair(at position: CGPoint) {
-        print("🧠 DEBUG: updateCrosshair at position: \(position)")
         crosshairPosition = position
         showCrosshair = true
         
         // Hide crosshair after a delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
-            print("🧠 DEBUG: Auto-hiding crosshair")
             self?.showCrosshair = false
         }
     }
@@ -223,35 +221,6 @@ class BrainAtlasViewModel: ObservableObject {
         case .sagittal: return coordinate.x
         case .coronal: return coordinate.y
         case .axial: return coordinate.z
-        }
-    }
-    
-    // MARK: - Region Lookup Methods
-    private func performRegionLookup(at coordinate: MNICoordinate) async {
-        print("🧠 DEBUG: Starting region lookup at \(coordinate)")
-        
-        do {
-            let regions = try await dataService.lookupRegions(at: coordinate)
-            
-            print("🧠 DEBUG: Successfully found \(regions.count) regions")
-            for (index, region) in regions.enumerated() {
-                print("🧠 DEBUG: Region \(index + 1): \(region.name) (\(region.category))")
-            }
-            
-            // Ensure we're on the main thread for UI updates
-            await MainActor.run {
-                self.currentRegions = regions
-                self.selectedRegion = regions.first
-                print("🧠 DEBUG: Updated UI - currentRegions.count: \(self.currentRegions.count)")
-                print("🧠 DEBUG: Updated UI - selectedRegion: \(self.selectedRegion?.name ?? "nil")")
-            }
-            
-        } catch {
-            print("❌ DEBUG: Error looking up regions: \(error)")
-            await MainActor.run {
-                self.currentRegions = []
-                self.selectedRegion = nil
-            }
         }
     }
 }

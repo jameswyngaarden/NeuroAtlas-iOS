@@ -1,8 +1,11 @@
-// BrainDataService.swift - Handles data loading and API calls
+// BrainDataService.swift - Improved region lookup with better error handling
 import Foundation
 
 class BrainDataService {
     private let baseURL = "https://jameswyngaarden.github.io/NeuroAtlas-iOS"
+    
+    // Cache the lookup table for better performance
+    private var regionLookupTable: [String: [BrainRegion]]?
     
     func loadCoordinateMappings() async throws -> CoordinateMappings {
         print("🔍 Starting to load coordinate mappings...")
@@ -36,78 +39,134 @@ class BrainDataService {
         }
     }
     
-    func lookupRegions(at coordinate: MNICoordinate) async throws -> [BrainRegion] {
-        print("🔍 Looking up regions at coordinate: \(coordinate)")
+    func loadRegionLookupTable() async throws {
+        // Load the lookup table once and cache it
+        guard regionLookupTable == nil else { return } // Already loaded
         
-        // Snap to 2mm grid for lookup table compatibility
-        let snappedX = Int(round(Double(coordinate.x) / 2.0)) * 2
-        let snappedY = Int(round(Double(coordinate.y) / 2.0)) * 2
-        let snappedZ = Int(round(Double(coordinate.z) / 2.0)) * 2
-        
-        let snappedCoord = MNICoordinate(x: snappedX, y: snappedY, z: snappedZ)
-        print("📍 Snapped to 2mm grid: \(snappedCoord)")
-        
-        let coordKey = "\(snappedCoord.x),\(snappedCoord.y),\(snappedCoord.z)"
-        print("🔑 Lookup key: \(coordKey)")
+        print("🔍 Loading Harvard-Oxford region lookup table...")
         
         guard let url = URL(string: "\(baseURL)/harvard_oxford_lookup_2mm.json") else {
-            print("❌ Invalid URL for harvard_oxford_lookup")
             throw BrainDataError.invalidData
         }
-        
-        print("📡 Fetching from: \(url)")
         
         do {
             let (data, response) = try await URLSession.shared.data(from: url)
             
             if let httpResponse = response as? HTTPURLResponse {
-                print("📊 HTTP Status: \(httpResponse.statusCode)")
-                if httpResponse.statusCode != 200 {
-                    print("❌ Non-200 status code")
-                    throw BrainDataError.networkError
-                }
+                print("📊 Region lookup HTTP Status: \(httpResponse.statusCode)")
             }
             
-            print("📄 Data size: \(data.count) bytes")
+            print("📄 Region lookup data size: \(data.count) bytes")
             
-            // Try to decode the lookup table
-            let lookupTable = try JSONDecoder().decode([String: [BrainRegion]].self, from: data)
-            print("✅ Successfully decoded lookup table with \(lookupTable.count) entries")
-            
-            let regions = lookupTable[coordKey] ?? []
-            
-            if regions.isEmpty {
-                print("📍 No regions found at \(coordKey), returning background")
-                let backgroundRegion = BrainRegion(
-                    id: 0,
-                    name: "Background / CSF / White Matter",
-                    category: "background",
-                    probability: 1.0,
-                    description: "Area outside labeled cortical/subcortical regions"
-                )
-                return [backgroundRegion]
-            } else {
-                print("📍 Found \(regions.count) regions at \(coordKey)")
-                for region in regions {
-                    print("   - \(region.name) (\(region.category))")
-                }
-                return regions
-            }
-        } catch DecodingError.keyNotFound(let key, let context) {
-            print("❌ Decoding error - missing key: \(key)")
-            print("   Context: \(context)")
-            throw error
-        } catch DecodingError.typeMismatch(let type, let context) {
-            print("❌ Decoding error - type mismatch: \(type)")
-            print("   Context: \(context)")
-            throw error
+            regionLookupTable = try JSONDecoder().decode([String: [BrainRegion]].self, from: data)
+            print("✅ Successfully loaded region lookup table with \(regionLookupTable?.count ?? 0) coordinate entries")
         } catch {
-            print("❌ Error looking up regions: \(error)")
-            throw error
-        } catch {
-            print("❌ Error looking up regions: \(error)")
+            print("❌ Error loading region lookup table: \(error)")
             throw error
         }
+    }
+    
+    func lookupRegions(at coordinate: MNICoordinate) async throws -> [BrainRegion] {
+        print("🔍 Looking up regions at coordinate: \(coordinate)")
+        
+        // Ensure lookup table is loaded
+        try await loadRegionLookupTable()
+        
+        guard let lookupTable = regionLookupTable else {
+            throw BrainDataError.invalidData
+        }
+        
+        // IMPROVED: Smart lookup strategy for better precision
+        // 1. Try exact coordinate first
+        let exactKey = "\(coordinate.x),\(coordinate.y),\(coordinate.z)"
+        
+        if let exactRegions = lookupTable[exactKey], !exactRegions.isEmpty {
+            print("📍 Found exact match at \(exactKey)")
+            return exactRegions
+        }
+        
+        // 2. Try even coordinates first (since atlas is 2mm resolution)
+        let evenCoord = MNICoordinate(
+            x: coordinate.x % 2 == 0 ? coordinate.x : coordinate.x - 1,
+            y: coordinate.y % 2 == 0 ? coordinate.y : coordinate.y - 1,
+            z: coordinate.z % 2 == 0 ? coordinate.z : coordinate.z - 1
+        )
+        let evenKey = "\(evenCoord.x),\(evenCoord.y),\(evenCoord.z)"
+        
+        if let evenRegions = lookupTable[evenKey], !evenRegions.isEmpty {
+            print("📍 Found even coordinate match at \(evenKey) for original \(exactKey)")
+            return evenRegions
+        }
+        
+        // 3. Try small neighborhood search (±2mm)
+        let nearbyCoordinates = generateSmartNearbyCoordinates(coordinate)
+        for nearbyCoord in nearbyCoordinates {
+            let key = "\(nearbyCoord.x),\(nearbyCoord.y),\(nearbyCoord.z)"
+            if let regions = lookupTable[key], !regions.isEmpty {
+                print("📍 Found nearby match at \(key) for original \(exactKey)")
+                return regions
+            }
+        }
+        
+        // 4. Fallback: traditional 2mm grid snapping
+        let snappedX = Int(round(Double(coordinate.x) / 2.0)) * 2
+        let snappedY = Int(round(Double(coordinate.y) / 2.0)) * 2
+        let snappedZ = Int(round(Double(coordinate.z) / 2.0)) * 2
+        
+        let snappedCoord = MNICoordinate(x: snappedX, y: snappedY, z: snappedZ)
+        let coordKey = "\(snappedCoord.x),\(snappedCoord.y),\(snappedCoord.z)"
+        
+        print("📍 Fallback: snapped to 2mm grid: \(snappedCoord)")
+        
+        let regions = lookupTable[coordKey] ?? []
+        
+        if regions.isEmpty {
+            let backgroundRegion = BrainRegion(
+                id: 0,
+                name: "Background / CSF / White Matter",
+                category: "background",
+                probability: 1.0,
+                description: "Area outside labeled cortical/subcortical regions"
+            )
+            print("📍 Found background region at \(coordKey)")
+            return [backgroundRegion]
+        } else {
+            print("📍 Found \(regions.count) regions at \(coordKey)")
+            for region in regions {
+                print("   - \(region.name) (\(region.category))")
+            }
+            return regions
+        }
+    }
+    
+    // IMPROVED: Smart nearby coordinate generation for atlas lookup
+    private func generateSmartNearbyCoordinates(_ coordinate: MNICoordinate) -> [MNICoordinate] {
+        var nearby: [MNICoordinate] = []
+        
+        // Priority order: check 2mm grid points first (most likely to have data)
+        let baseCoords = [
+            MNICoordinate(x: coordinate.x - 2, y: coordinate.y, z: coordinate.z),
+            MNICoordinate(x: coordinate.x + 2, y: coordinate.y, z: coordinate.z),
+            MNICoordinate(x: coordinate.x, y: coordinate.y - 2, z: coordinate.z),
+            MNICoordinate(x: coordinate.x, y: coordinate.y + 2, z: coordinate.z),
+            MNICoordinate(x: coordinate.x, y: coordinate.y, z: coordinate.z - 2),
+            MNICoordinate(x: coordinate.x, y: coordinate.y, z: coordinate.z + 2)
+        ]
+        
+        // Add diagonal 2mm neighbors
+        let diagonalCoords = [
+            MNICoordinate(x: coordinate.x - 2, y: coordinate.y - 2, z: coordinate.z),
+            MNICoordinate(x: coordinate.x + 2, y: coordinate.y + 2, z: coordinate.z),
+            MNICoordinate(x: coordinate.x - 2, y: coordinate.y, z: coordinate.z - 2),
+            MNICoordinate(x: coordinate.x + 2, y: coordinate.y, z: coordinate.z + 2),
+            MNICoordinate(x: coordinate.x, y: coordinate.y - 2, z: coordinate.z - 2),
+            MNICoordinate(x: coordinate.x, y: coordinate.y + 2, z: coordinate.z + 2)
+        ]
+        
+        nearby.append(contentsOf: baseCoords)
+        nearby.append(contentsOf: diagonalCoords)
+        
+        return nearby
     }
     
     func loadSliceImage(for slice: BrainSlice) async throws -> Data {

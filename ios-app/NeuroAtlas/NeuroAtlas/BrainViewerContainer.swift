@@ -1,4 +1,4 @@
-// BrainViewerContainer.swift - Main brain image viewer
+// BrainViewerContainer.swift - Main brain image viewer with navigation widget
 import SwiftUI
 
 struct BrainViewerContainer: View {
@@ -15,7 +15,7 @@ struct BrainViewerContainer: View {
                     BrainSliceView(
                         slice: currentSlice,
                         viewModel: viewModel,
-                        containerSize: geometry.size
+                        containerSize: CGSize(width: geometry.size.width, height: geometry.size.width)
                     )
                 } else {
                     // Loading state
@@ -34,8 +34,20 @@ struct BrainViewerContainer: View {
                 if viewModel.showCrosshair {
                     CrosshairView(position: viewModel.crosshairPosition)
                 }
+                
+                // NEW: Navigation brain widget in bottom right corner
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        NavigationBrainView(viewModel: viewModel)
+                            .padding(.trailing, 16)
+                            .padding(.bottom, 16)
+                    }
+                }
             }
         }
+        .aspectRatio(1.0, contentMode: .fit)
         .clipped()
         .onAppear {
             viewModel.loadInitialData()

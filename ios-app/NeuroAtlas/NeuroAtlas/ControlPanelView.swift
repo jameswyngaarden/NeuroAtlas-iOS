@@ -1,4 +1,4 @@
-// ControlPanelView.swift - Bottom controls for plane selection and navigation
+// ControlPanelView.swift - Fixed layout with proper crosshair toggle
 import SwiftUI
 
 struct ControlPanelView: View {
@@ -15,17 +15,19 @@ struct ControlPanelView: View {
             // Coordinate input
             CoordinateInputView(viewModel: viewModel)
             
-            // Crosshair toggle - MOVED INSIDE THE VSTACK
+            // FIXED: Crosshair toggle (moved inside main VStack)
             HStack {
                 Text("Show Crosshair")
                     .font(.headline)
                 
                 Spacer()
                 
-                Toggle("", isOn: $viewModel.showCrosshair)
+                Toggle("Show Crosshair", isOn: $viewModel.showCrosshair)
                     .labelsHidden()
+                    .toggleStyle(SwitchToggleStyle(tint: .blue))
             }
             .padding(.horizontal)
+            .padding(.top, 8)
         }
         .padding()
         .background(.background)
