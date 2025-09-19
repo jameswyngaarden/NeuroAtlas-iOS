@@ -1,4 +1,4 @@
-// ControlPanelView.swift - Fixed layout with proper crosshair toggle
+// ControlPanelView.swift - Enhanced with side-by-side toggles
 import SwiftUI
 
 struct ControlPanelView: View {
@@ -15,16 +15,35 @@ struct ControlPanelView: View {
             // Coordinate input
             CoordinateInputView(viewModel: viewModel)
             
-            // FIXED: Crosshair toggle (moved inside main VStack)
+            // ENHANCED: Side-by-side toggle controls
             HStack {
-                Text("Show Crosshair")
-                    .font(.headline)
+                Spacer()
+                
+                // Crosshair toggle
+                VStack(spacing: 4) {
+                    Text("Crosshair")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    Toggle("Show Crosshair", isOn: $viewModel.showCrosshair)
+                        .labelsHidden()
+                        .toggleStyle(SwitchToggleStyle(tint: .blue))
+                }
                 
                 Spacer()
                 
-                Toggle("Show Crosshair", isOn: $viewModel.showCrosshair)
-                    .labelsHidden()
-                    .toggleStyle(SwitchToggleStyle(tint: .blue))
+                // Region highlighting toggle
+                VStack(spacing: 4) {
+                    Text("Regions")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    Toggle("Highlight Regions", isOn: $viewModel.showRegionHighlight)
+                        .labelsHidden()
+                        .toggleStyle(SwitchToggleStyle(tint: .blue))
+                }
+                
+                Spacer()
             }
             .padding(.horizontal)
             .padding(.top, 8)

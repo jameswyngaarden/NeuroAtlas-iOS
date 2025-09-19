@@ -1,7 +1,4 @@
-// MARK: - Private Methods
-    private func setupCoordinateTransformer() {
-        // Setup any coordinate transformation configuration
-    }// BrainAtlasViewModel.swift - Updated to start at sagittal +00
+// BrainAtlasViewModel.swift - Enhanced with minimal region highlighting integration
 import Foundation
 import SwiftUI
 import Combine
@@ -40,6 +37,10 @@ class BrainAtlasViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     
+    // NEW: Region highlighting properties (minimal addition)
+    @Published var showRegionHighlight = false
+    @Published var currentRegionHighlight: RegionHighlight?
+    
     // MARK: - Private Properties
     private var coordinateMappings: CoordinateMappings?
     private let dataService = BrainDataService()
@@ -63,6 +64,7 @@ class BrainAtlasViewModel: ObservableObject {
     // MARK: - Initialization
     init() {
         setupCoordinateTransformer()
+        setupRegionHighlightObserver()
     }
     
     // MARK: - Public Methods
@@ -126,6 +128,9 @@ class BrainAtlasViewModel: ObservableObject {
         updateCoordinate(mniCoordinate)
         updateCrosshair(at: location)
         
+        // NEW: Update region highlight if enabled
+        updateRegionHighlightIfNeeded()
+        
         // Note: Brain regions will be updated automatically via currentCoordinate didSet
     }
     
@@ -133,19 +138,41 @@ class BrainAtlasViewModel: ObservableObject {
         handleTap(at: location, containerSize: containerSize)
     }
     
+    // NEW: Toggle region highlighting
+    func toggleRegionHighlight() {
+        showRegionHighlight.toggle()
+        if showRegionHighlight {
+            updateRegionHighlightIfNeeded()
+        } else {
+            currentRegionHighlight = nil
+        }
+        print("🎭 Region highlighting: \(showRegionHighlight ? "ON" : "OFF")")
+    }
+    
+    // NEW: Select specific region for highlighting
+    func selectRegionForHighlight(_ region: BrainRegion) {
+        selectedRegion = region
+        if showRegionHighlight {
+            updateRegionHighlightIfNeeded()
+        }
+    }
+    
     func previousSlice() {
         guard canGoPrevious else { return }
         currentSliceIndex -= 1
+        updateRegionHighlightIfNeeded()
     }
     
     func nextSlice() {
         guard canGoNext else { return }
         currentSliceIndex += 1
+        updateRegionHighlightIfNeeded()
     }
     
     func setSliceIndex(_ index: Int) {
         let clampedIndex = max(0, min(index, totalSlicesInCurrentPlane - 1))
         currentSliceIndex = clampedIndex
+        updateRegionHighlightIfNeeded()
     }
     
     func goToCoordinate(_ coordinate: MNICoordinate) {
@@ -176,6 +203,8 @@ class BrainAtlasViewModel: ObservableObject {
             // Update crosshair position for the new coordinate
             // This would need the screen position calculation
         }
+        
+        updateRegionHighlightIfNeeded()
     }
     
     // FIXED: New method to preserve coordinates when switching planes
@@ -209,6 +238,9 @@ class BrainAtlasViewModel: ObservableObject {
         // FIXED: Update crosshair position for the new plane view
         updateCrosshairForNewPlane()
         
+        // NEW: Update region highlight for new plane
+        updateRegionHighlightIfNeeded()
+        
         print("🔄 Switched to \(currentPlane.rawValue) plane, preserved coordinate: \(preservedCoordinate)")
     }
     
@@ -241,6 +273,9 @@ class BrainAtlasViewModel: ObservableObject {
                 await MainActor.run {
                     currentRegions = regions
                     selectedRegion = regions.first
+                    
+                    // NEW: Update region highlight when regions change
+                    updateRegionHighlightIfNeeded()
                 }
                 
                 print("🧠 Updated regions for coordinate \(currentCoordinate): found \(regions.count) regions")
@@ -252,9 +287,63 @@ class BrainAtlasViewModel: ObservableObject {
                 await MainActor.run {
                     currentRegions = []
                     selectedRegion = nil
+                    currentRegionHighlight = nil
                 }
             }
         }
+    }
+    
+    // NEW: Update region highlight based on current state
+    private func updateRegionHighlightIfNeeded() {
+        guard showRegionHighlight,
+              let region = selectedRegion,
+              let slice = currentSlice else {
+            currentRegionHighlight = nil
+            return
+        }
+        
+        // Generate region highlight bounds using dataService
+        Task {
+            do {
+                let bounds = try await dataService.generateRegionBounds(
+                    for: region,
+                    coordinate: currentCoordinate,
+                    plane: currentPlane,
+                    slice: slice,
+                    containerSize: lastContainerSize
+                )
+                
+                await MainActor.run {
+                    currentRegionHighlight = RegionHighlight(
+                        region: region,
+                        coordinate: currentCoordinate,
+                        plane: currentPlane,
+                        bounds: bounds
+                    )
+                    print("🎭 Updated region highlight for \(region.name)")
+                }
+            } catch {
+                print("❌ Error generating region highlight: \(error)")
+                await MainActor.run {
+                    currentRegionHighlight = nil
+                }
+            }
+        }
+    }
+    
+    // NEW: Observer setup for region highlighting
+    private func setupRegionHighlightObserver() {
+        // Observe plane changes to update region highlights
+        $currentPlane
+            .sink { [weak self] _ in
+                self?.updateRegionHighlightIfNeeded()
+            }
+            .store(in: &cancellables)
+    }
+    
+    // MARK: - Private Methods
+    private func setupCoordinateTransformer() {
+        // Setup any coordinate transformation configuration
     }
     
     private func updateCurrentSlice() {

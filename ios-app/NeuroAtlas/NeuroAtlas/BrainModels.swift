@@ -1,4 +1,4 @@
-// BrainModels.swift - Core data structures
+// BrainModels.swift - Enhanced with region highlighting capabilities (minimal additions)
 import Foundation
 import SwiftUI
 
@@ -81,12 +81,28 @@ struct CoordinateBounds: Codable {
 
 // MARK: - Brain Region Models
 
-struct BrainRegion: Codable, Identifiable {
+struct BrainRegion: Codable, Identifiable, Equatable {
     let id: Int
     let name: String
     let category: String
     let probability: Float?
     let description: String?
+    
+    // NEW: Color for highlighting this region
+    var highlightColor: Color {
+        switch category.lowercased() {
+        case "cortical":
+            return .blue.opacity(0.5)
+        case "subcortical":
+            return .red.opacity(0.5)
+        case "white matter":
+            return .green.opacity(0.5)
+        case "csf":
+            return .cyan.opacity(0.5)
+        default:
+            return .yellow.opacity(0.5)
+        }
+    }
 }
 
 struct RegionLookupResponse: Codable {
@@ -107,5 +123,17 @@ struct CoordinateMappings: Codable {
         case .coronal: return coronal
         case .axial: return axial
         }
+    }
+}
+
+// NEW: Simple region highlight data structure
+struct RegionHighlight {
+    let region: BrainRegion
+    let coordinate: MNICoordinate
+    let plane: AnatomicalPlane
+    let bounds: CGRect // Screen coordinates for the region
+    
+    var color: Color {
+        region.highlightColor
     }
 }
