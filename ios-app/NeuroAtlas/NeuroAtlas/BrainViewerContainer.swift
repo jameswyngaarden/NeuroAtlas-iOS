@@ -45,6 +45,7 @@ struct BrainViewerContainer: View {
                             .padding(.bottom, 16)
                     }
                 }
+                .allowsHitTesting(false) // Prevent navigation widget from blocking main brain interactions
             }
         }
         .aspectRatio(1.0, contentMode: .fit)

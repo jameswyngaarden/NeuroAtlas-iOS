@@ -38,17 +38,17 @@ struct CoordinateTransformer {
         switch slice.plane {
         case .sagittal:
             mniX = slice.mniPosition
-            // IMPROVED: More precise calculation with rounding instead of truncation
-            let rawMniY = Double(bounds.yMin) + (pixelX / sliceWidth) * Double(bounds.yMax - bounds.yMin)
+            // FIXED: Flip Y-axis for sagittal slices to correct anterior/posterior orientation
+            let rawMniY = Double(bounds.yMax) - (pixelX / sliceWidth) * Double(bounds.yMax - bounds.yMin)
             let rawMniZ = Double(bounds.zMin) + (pixelY / sliceHeight) * Double(bounds.zMax - bounds.zMin)
             
             // Round to nearest integer for better precision
             mniY = Int(round(rawMniY))
             mniZ = Int(round(rawMniZ))
             
-            print("Sagittal calculation:")
+            print("Sagittal calculation (CORRECTED):")
             print("  mniX = \(slice.mniPosition) (fixed)")
-            print("  mniY = \(bounds.yMin) + (\(pixelX)/\(sliceWidth)) * \(bounds.yMax - bounds.yMin) = \(rawMniY) → \(mniY)")
+            print("  mniY = \(bounds.yMax) - (\(pixelX)/\(sliceWidth)) * \(bounds.yMax - bounds.yMin) = \(rawMniY) → \(mniY)")
             print("  mniZ = \(bounds.zMin) + (\(pixelY)/\(sliceHeight)) * \(bounds.zMax - bounds.zMin) = \(rawMniZ) → \(mniZ)")
             
         case .coronal:
@@ -96,7 +96,8 @@ struct CoordinateTransformer {
         
         switch slice.plane {
         case .sagittal:
-            pixelX = (Double(coordinate.y - bounds.yMin) / Double(bounds.yMax - bounds.yMin)) * sliceWidth
+            // FIXED: Apply same Y-axis flip for reverse transformation
+            pixelX = (Double(bounds.yMax - coordinate.y) / Double(bounds.yMax - bounds.yMin)) * sliceWidth
             pixelY = (Double(coordinate.z - bounds.zMin) / Double(bounds.zMax - bounds.zMin)) * sliceHeight
             
         case .coronal:

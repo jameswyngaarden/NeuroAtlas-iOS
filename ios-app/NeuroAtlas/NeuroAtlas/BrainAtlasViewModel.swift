@@ -169,8 +169,12 @@ class BrainAtlasViewModel: ObservableObject {
         currentSliceIndex = closestIndex
         updateCurrentCoordinate()
         
-        // Update crosshair to show the coordinate
-        showCrosshair = true
+        // Only update crosshair position if crosshair is enabled
+        // Don't force it on
+        if showCrosshair {
+            // Update crosshair position for the new coordinate
+            // This would need the screen position calculation
+        }
     }
     
     // MARK: - Private Methods
@@ -207,12 +211,17 @@ class BrainAtlasViewModel: ObservableObject {
     }
     
     private func updateCrosshair(at position: CGPoint) {
-        crosshairPosition = position
-        showCrosshair = true
-        
-        // Hide crosshair after a delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
-            self?.showCrosshair = false
+        // ADDED: Compensate crosshair position for the image offset
+        let imageOffset: CGFloat = 15
+        crosshairPosition = CGPoint(
+            x: position.x - imageOffset,
+            y: position.y - imageOffset
+        )
+        // Only show crosshair if the toggle is enabled
+        // Don't automatically hide it - let the user control it with the toggle
+        if showCrosshair {
+            // Keep crosshair visible as long as toggle is on
+            // Position is already set above
         }
     }
     
