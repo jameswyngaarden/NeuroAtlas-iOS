@@ -109,19 +109,3 @@ struct CoordinateMappings: Codable {
         }
     }
 }
-
-// MARK: - API Response Models
-
-struct CoordinateMappings: Codable {
-    let sagittal: [BrainSlice]
-    let coronal: [BrainSlice]
-    let axial: [BrainSlice]
-    
-    func slices(for plane: AnatomicalPlane) -> [BrainSlice] {
-        switch plane {
-        case .sagittal: return sagittal
-        case .coronal: return coronal
-        case .axial: return axial
-        }
-    }
-}
