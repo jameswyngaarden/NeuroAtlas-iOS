@@ -6,7 +6,7 @@ import SwiftUI
 
 struct MNICoordinate: Codable, Equatable {
     let x: Int
-    let y: Int  
+    let y: Int
     let z: Int
     
     static let zero = MNICoordinate(x: 0, y: 0, z: 0)
@@ -47,12 +47,17 @@ struct BrainSlice: Codable, Identifiable {
     let imagePath: String
     
     var imageURL: URL {
-        URL(string: "https://jameswyngaarden.github.io/NeuroAtlas-Images/slices/\(plane.rawValue)/\(imageFilename)")!
+        URL(string: "https://jameswyngaarden.github.io/NeuroAtlas-iOS/slices/\(plane.rawValue)/\(imageFilename)")!
     }
     
     private enum CodingKeys: String, CodingKey {
-        case plane, sliceShape, voxelCoordinates, affineTransform, bounds, description, imageFilename, imagePath
+        case plane, bounds, description
         case mniPosition = "mni_position"
+        case sliceShape = "slice_shape"
+        case voxelCoordinates = "voxel_coordinates"
+        case affineTransform = "affine_transform"
+        case imageFilename = "image_filename"
+        case imagePath = "image_path"
     }
 }
 
@@ -71,6 +76,37 @@ struct CoordinateBounds: Codable {
         case yMax = "y_max"
         case zMin = "z_min"
         case zMax = "z_max"
+    }
+}
+
+// MARK: - Brain Region Models
+
+struct BrainRegion: Codable, Identifiable {
+    let id: Int
+    let name: String
+    let category: String
+    let probability: Float?
+    let description: String?
+}
+
+struct RegionLookupResponse: Codable {
+    let coordinate: String
+    let regions: [BrainRegion]
+}
+
+// MARK: - API Response Models
+
+struct CoordinateMappings: Codable {
+    let sagittal: [BrainSlice]
+    let coronal: [BrainSlice]
+    let axial: [BrainSlice]
+    
+    func slices(for plane: AnatomicalPlane) -> [BrainSlice] {
+        switch plane {
+        case .sagittal: return sagittal
+        case .coronal: return coronal
+        case .axial: return axial
+        }
     }
 }
 
