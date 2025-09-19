@@ -1,4 +1,7 @@
-// BrainAtlasViewModel.swift - Updated to start at sagittal +00
+// MARK: - Private Methods
+    private func setupCoordinateTransformer() {
+        // Setup any coordinate transformation configuration
+    }// BrainAtlasViewModel.swift - Updated to start at sagittal +00
 import Foundation
 import SwiftUI
 import Combine
@@ -8,13 +11,23 @@ class BrainAtlasViewModel: ObservableObject {
     // MARK: - Published Properties
     @Published var currentPlane: AnatomicalPlane = .sagittal {
         didSet {
-            updateCurrentSlice()
+            // FIXED: When changing planes, preserve current coordinate and find appropriate slice
+            if oldValue != currentPlane {
+                goToCurrentCoordinateInNewPlane()
+            }
         }
     }
     @Published var currentRegions: [BrainRegion] = []
     @Published var selectedRegion: BrainRegion?
     
-    @Published var currentCoordinate = MNICoordinate.zero
+    @Published var currentCoordinate = MNICoordinate.zero {
+        didSet {
+            // FIXED: Update brain regions whenever coordinates change (not just on tap)
+            if oldValue != currentCoordinate {
+                updateBrainRegions()
+            }
+        }
+    }
     @Published var currentSlice: BrainSlice?
     @Published var currentSliceIndex: Int = 0 {
         didSet {
@@ -31,6 +44,7 @@ class BrainAtlasViewModel: ObservableObject {
     private var coordinateMappings: CoordinateMappings?
     private let dataService = BrainDataService()
     private var cancellables = Set<AnyCancellable>()
+    private var lastContainerSize: CGSize = CGSize(width: 400, height: 400) // Default assumption
     
     // MARK: - Computed Properties
     var totalSlicesInCurrentPlane: Int {
@@ -64,7 +78,7 @@ class BrainAtlasViewModel: ObservableObject {
                 setDefaultSlicePosition()
                 
                 updateCurrentSlice()
-                updateCurrentCoordinate()
+                updateCurrentCoordinateFromSlice()
             } catch {
                 errorMessage = "Failed to load brain data: \(error.localizedDescription)"
                 print("❌ Error loading data: \(error)")
@@ -99,6 +113,9 @@ class BrainAtlasViewModel: ObservableObject {
     func handleTap(at location: CGPoint, containerSize: CGSize) {
         guard let slice = currentSlice else { return }
         
+        // Store container size for future crosshair calculations
+        lastContainerSize = containerSize
+        
         // Convert tap location to MNI coordinates
         let mniCoordinate = CoordinateTransformer.screenToMNI(
             screenPoint: location,
@@ -109,23 +126,7 @@ class BrainAtlasViewModel: ObservableObject {
         updateCoordinate(mniCoordinate)
         updateCrosshair(at: location)
         
-        // Look up brain regions at this coordinate
-        Task {
-            do {
-                let regions = try await dataService.lookupRegions(at: mniCoordinate)
-                currentRegions = regions
-                selectedRegion = regions.first
-                
-                print("Found \(regions.count) regions at \(mniCoordinate)")
-                for region in regions {
-                    print("   - \(region.name) (\(region.category))")
-                }
-            } catch {
-                print("Error looking up regions: \(error)")
-                currentRegions = []
-                selectedRegion = nil
-            }
-        }
+        // Note: Brain regions will be updated automatically via currentCoordinate didSet
     }
     
     func handleDrag(at location: CGPoint, containerSize: CGSize) {
@@ -167,7 +168,7 @@ class BrainAtlasViewModel: ObservableObject {
         }
         
         currentSliceIndex = closestIndex
-        updateCurrentCoordinate()
+        updateCurrentCoordinateFromSlice()
         
         // Only update crosshair position if crosshair is enabled
         // Don't force it on
@@ -177,9 +178,83 @@ class BrainAtlasViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Private Methods
-    private func setupCoordinateTransformer() {
-        // Setup any coordinate transformation configuration
+    // FIXED: New method to preserve coordinates when switching planes
+    private func goToCurrentCoordinateInNewPlane() {
+        guard let mappings = coordinateMappings else {
+            updateCurrentSlice()
+            return
+        }
+        
+        let preservedCoordinate = currentCoordinate
+        let slicesForPlane = mappings.slices(for: currentPlane)
+        let targetPosition = coordinateValue(for: preservedCoordinate, in: currentPlane)
+        
+        // Find slice with closest MNI position to preserve coordinate
+        var closestIndex = 0
+        var closestDistance = abs(slicesForPlane[0].mniPosition - targetPosition)
+        
+        for (index, slice) in slicesForPlane.enumerated() {
+            let distance = abs(slice.mniPosition - targetPosition)
+            if distance < closestDistance {
+                closestDistance = distance
+                closestIndex = index
+            }
+        }
+        
+        currentSliceIndex = closestIndex
+        // Restore the preserved coordinate after slice selection
+        currentCoordinate = preservedCoordinate
+        updateCurrentSlice()
+        
+        // FIXED: Update crosshair position for the new plane view
+        updateCrosshairForNewPlane()
+        
+        print("🔄 Switched to \(currentPlane.rawValue) plane, preserved coordinate: \(preservedCoordinate)")
+    }
+    
+    // FIXED: Update crosshair position when switching planes
+    private func updateCrosshairForNewPlane() {
+        guard let slice = currentSlice, showCrosshair else { return }
+        
+        // Use the last known container size from interactions
+        let screenPosition = CoordinateTransformer.mniToScreen(
+            coordinate: currentCoordinate,
+            containerSize: lastContainerSize,
+            slice: slice
+        )
+        
+        // Apply the same offset compensation as in BrainSliceView
+        let imageOffset: CGFloat = 15
+        crosshairPosition = CGPoint(
+            x: screenPosition.x - imageOffset,
+            y: screenPosition.y - imageOffset
+        )
+        
+        print("🎯 Updated crosshair position to \(crosshairPosition) for coordinate \(currentCoordinate) in \(currentPlane.rawValue) view")
+    }
+    
+    // FIXED: Separate method for updating brain regions
+    private func updateBrainRegions() {
+        Task {
+            do {
+                let regions = try await dataService.lookupRegions(at: currentCoordinate)
+                await MainActor.run {
+                    currentRegions = regions
+                    selectedRegion = regions.first
+                }
+                
+                print("🧠 Updated regions for coordinate \(currentCoordinate): found \(regions.count) regions")
+                for region in regions {
+                    print("   - \(region.name) (\(region.category))")
+                }
+            } catch {
+                print("❌ Error updating regions: \(error)")
+                await MainActor.run {
+                    currentRegions = []
+                    selectedRegion = nil
+                }
+            }
+        }
     }
     
     private func updateCurrentSlice() {
@@ -189,20 +264,27 @@ class BrainAtlasViewModel: ObservableObject {
         guard currentSliceIndex < slicesForPlane.count else { return }
         
         currentSlice = slicesForPlane[currentSliceIndex]
-        updateCurrentCoordinate()
+        // Only update coordinate if we're not preserving it from a plane switch
+        updateCurrentCoordinateFromSlice()
     }
     
-    private func updateCurrentCoordinate() {
+    private func updateCurrentCoordinateFromSlice() {
         guard let slice = currentSlice else { return }
         
         // Update coordinate based on current slice position
+        let newCoordinate: MNICoordinate
         switch currentPlane {
         case .sagittal:
-            currentCoordinate = MNICoordinate(x: slice.mniPosition, y: currentCoordinate.y, z: currentCoordinate.z)
+            newCoordinate = MNICoordinate(x: slice.mniPosition, y: currentCoordinate.y, z: currentCoordinate.z)
         case .coronal:
-            currentCoordinate = MNICoordinate(x: currentCoordinate.x, y: slice.mniPosition, z: currentCoordinate.z)
+            newCoordinate = MNICoordinate(x: currentCoordinate.x, y: slice.mniPosition, z: currentCoordinate.z)
         case .axial:
-            currentCoordinate = MNICoordinate(x: currentCoordinate.x, y: currentCoordinate.y, z: slice.mniPosition)
+            newCoordinate = MNICoordinate(x: currentCoordinate.x, y: currentCoordinate.y, z: slice.mniPosition)
+        }
+        
+        // Avoid triggering didSet if coordinate hasn't actually changed
+        if newCoordinate != currentCoordinate {
+            currentCoordinate = newCoordinate
         }
     }
     
