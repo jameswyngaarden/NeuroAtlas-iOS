@@ -1,4 +1,4 @@
-// BrainSliceView.swift - Enhanced with minimal region highlighting integration
+// BrainSliceView.swift - Updated with actual region mask overlay
 import SwiftUI
 
 struct BrainSliceView: View {
@@ -13,13 +13,13 @@ struct BrainSliceView: View {
     
     var body: some View {
         // Debug: Print the image URL
-        let _ = print("🖼️ Loading brain slice: \(slice.imageURL)")
+        let _ = print("Loading brain slice: \(slice.imageURL)")
         
         ZStack {
             AsyncImage(url: slice.imageURL) { phase in
                 switch phase {
                 case .success(let image):
-                    let _ = print("✅ Successfully loaded image: \(slice.imageFilename)")
+                    let _ = print("Successfully loaded image: \(slice.imageFilename)")
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fit)
@@ -40,7 +40,7 @@ struct BrainSliceView: View {
                         )
                     
                 case .failure(let error):
-                    let _ = print("❌ Failed to load image: \(slice.imageFilename) - Error: \(error)")
+                    let _ = print("Failed to load image: \(slice.imageFilename) - Error: \(error)")
                     Rectangle()
                         .fill(Color.red.opacity(0.3))
                         .aspectRatio(1.0, contentMode: .fit)
@@ -57,7 +57,7 @@ struct BrainSliceView: View {
                         .offset(x: -imageOffset, y: -imageOffset) // ADDED: Apply offset to error state too
                     
                 case .empty:
-                    let _ = print("📄 Loading image: \(slice.imageFilename)")
+                    let _ = print("Loading image: \(slice.imageFilename)")
                     Rectangle()
                         .fill(Color.gray.opacity(0.3))
                         .aspectRatio(1.0, contentMode: .fit)
@@ -68,7 +68,7 @@ struct BrainSliceView: View {
                         .offset(x: -imageOffset, y: -imageOffset) // ADDED: Apply offset to loading state too
                     
                 @unknown default:
-                    let _ = print("❓ Unknown AsyncImage state for: \(slice.imageFilename)")
+                    let _ = print("Unknown AsyncImage state for: \(slice.imageFilename)")
                     Rectangle()
                         .fill(Color.gray.opacity(0.3))
                         .aspectRatio(1.0, contentMode: .fit)
@@ -76,18 +76,16 @@ struct BrainSliceView: View {
                 }
             }
             
-            // NEW: Region highlight overlay
+            // NEW: Region highlight overlay using actual mask image
             if viewModel.showRegionHighlight,
                let regionHighlight = viewModel.currentRegionHighlight {
-                SimpleRegionHighlightView(
-                    regionHighlight: regionHighlight,
-                    containerSize: containerSize
-                )
-                .allowsHitTesting(false) // Allow taps to pass through to the brain image
-                .transition(.asymmetric(
-                    insertion: .scale(scale: 0.8).combined(with: .opacity),
-                    removal: .scale(scale: 1.1).combined(with: .opacity)
-                ))
+                RegionHighlightView(regionHighlight: regionHighlight)
+                    .offset(x: -imageOffset, y: -imageOffset) // Apply same offset as brain image
+                    .allowsHitTesting(false) // Allow taps to pass through to the brain image
+                    .transition(.asymmetric(
+                        insertion: .scale(scale: 0.8).combined(with: .opacity),
+                        removal: .scale(scale: 1.1).combined(with: .opacity)
+                    ))
             }
             
             // Crosshair overlay (using your existing CrosshairView)

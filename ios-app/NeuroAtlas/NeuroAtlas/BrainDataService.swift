@@ -1,12 +1,16 @@
-// BrainDataService.swift - Enhanced with region bounds generation
+// BrainDataService.swift - Updated with region mask loading
 import Foundation
-import CoreGraphics
+import UIKit
 
 class BrainDataService {
     private let baseURL = "https://jameswyngaarden.github.io/NeuroAtlas-iOS"
     
     // Cache the lookup table for better performance
     private var regionLookupTable: [String: [BrainRegion]]?
+    
+    // Cache for region mask images
+    private var maskImageCache: [String: UIImage] = [:]
+    private let cacheQueue = DispatchQueue(label: "mask.cache", attributes: .concurrent)
     
     func loadCoordinateMappings() async throws -> CoordinateMappings {
         print("🔍 Starting to load coordinate mappings...")
@@ -140,27 +144,53 @@ class BrainDataService {
         }
     }
     
-    // NEW: Generate region bounds for highlighting
-    func generateRegionBounds(
-        for region: BrainRegion,
-        coordinate: MNICoordinate,
-        plane: AnatomicalPlane,
-        slice: BrainSlice,
-        containerSize: CGSize
-    ) async throws -> CGRect {
-        print("🎭 Generating region bounds for \(region.name) at \(coordinate)")
+    // NEW: Load region mask image
+    func loadRegionMask(for region: BrainRegion, slice: BrainSlice) async throws -> UIImage? {
+        let cacheKey = "\(region.id)_\(slice.plane.rawValue)_\(slice.imageFilename)"
         
-        // Create realistic region bounds based on region category and brain anatomy
-        let bounds = generateAnatomicalRegionBounds(
-            region: region,
-            coordinate: coordinate,
-            plane: plane,
-            slice: slice,
-            containerSize: containerSize
-        )
+        // Check cache first
+        if let cachedImage = await getCachedMaskImage(for: cacheKey) {
+            print("💾 Using cached mask for region \(region.name)")
+            return cachedImage
+        }
         
-        print("🎭 Generated bounds: \(bounds)")
-        return bounds
+        let maskURL = slice.regionMaskURL(for: region.id)
+        print("🔍 Attempting to load mask from: \(maskURL)")
+        print("🔍 Region ID: \(region.id), Region Name: \(region.name)")
+        print("🔍 Slice filename: \(slice.imageFilename)")
+        print("🔍 Plane: \(slice.plane.rawValue)")
+        
+        do {
+            let (data, response) = try await URLSession.shared.data(from: maskURL)
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                print("📡 HTTP Response: \(httpResponse.statusCode)")
+                
+                guard httpResponse.statusCode == 200 else {
+                    print("⚠️ Region mask not found (HTTP \(httpResponse.statusCode)) for region \(region.name) at \(maskURL)")
+                    return nil
+                }
+            }
+            
+            print("📄 Mask data size: \(data.count) bytes")
+            
+            guard let image = UIImage(data: data) else {
+                print("❌ Could not create image from mask data for region \(region.name)")
+                return nil
+            }
+            
+            print("✅ Successfully loaded mask for region \(region.name) - Image size: \(image.size)")
+            
+            // Cache the image
+            await cacheMaskImage(image, for: cacheKey)
+            
+            return image
+            
+        } catch {
+            print("❌ Error loading region mask for \(region.name): \(error)")
+            print("❌ Full error details: \(error.localizedDescription)")
+            return nil
+        }
     }
     
     // IMPROVED: Smart nearby coordinate generation for atlas lookup
@@ -193,125 +223,30 @@ class BrainDataService {
         return nearby
     }
     
-    // NEW: Generate anatomically realistic region bounds
-    private func generateAnatomicalRegionBounds(
-        region: BrainRegion,
-        coordinate: MNICoordinate,
-        plane: AnatomicalPlane,
-        slice: BrainSlice,
-        containerSize: CGSize
-    ) -> CGRect {
-        
-        // Convert MNI coordinate to screen position
-        let centerPoint = CoordinateTransformer.mniToScreen(
-            coordinate: coordinate,
-            containerSize: containerSize,
-            slice: slice
-        )
-        
-        // Account for image offset
-        let imageOffset: CGFloat = 15
-        let adjustedCenter = CGPoint(
-            x: centerPoint.x - imageOffset,
-            y: centerPoint.y - imageOffset
-        )
-        
-        // Generate bounds based on region category and anatomical knowledge
-        let (width, height, shape) = getRegionDimensions(for: region, plane: plane)
-        
-        var bounds: CGRect
-        
-        switch shape {
-        case .cortical:
-            // Cortical regions: elongated along cortical surface
-            bounds = generateCorticalBounds(center: adjustedCenter, width: width, height: height, plane: plane)
-            
-        case .subcortical:
-            // Subcortical regions: more compact and rounded
-            bounds = generateSubcorticalBounds(center: adjustedCenter, width: width, height: height)
-            
-        case .generic:
-            // Generic regions: simple elliptical
-            bounds = generateEllipticalBounds(center: adjustedCenter, width: width, height: height)
-        }
-        
-        // Ensure bounds stay within container
-        bounds = bounds.intersection(CGRect(origin: .zero, size: containerSize))
-        
-        return bounds
-    }
+    // MARK: - Cache management
     
-    private enum RegionShape {
-        case cortical, subcortical, generic
-    }
-    
-    private func getRegionDimensions(for region: BrainRegion, plane: AnatomicalPlane) -> (width: CGFloat, height: CGFloat, shape: RegionShape) {
-        let baseSize: CGFloat = 40 // Base region size
-        
-        switch region.category.lowercased() {
-        case "cortical":
-            // Cortical regions are typically elongated
-            let width: CGFloat = baseSize + CGFloat(region.id % 20) + 20
-            let height: CGFloat = baseSize * 0.6 + CGFloat(region.id % 10)
-            return (width, height, .cortical)
-            
-        case "subcortical":
-            // Subcortical regions are more compact
-            let size: CGFloat = baseSize * 0.8 + CGFloat(region.id % 15)
-            return (size, size, .subcortical)
-            
-        default:
-            // Generic regions
-            let width: CGFloat = baseSize + CGFloat(region.id % 15)
-            let height: CGFloat = baseSize + CGFloat((region.id * 3) % 15)
-            return (width, height, .generic)
+    private func getCachedMaskImage(for key: String) async -> UIImage? {
+        return await withCheckedContinuation { continuation in
+            cacheQueue.async {
+                continuation.resume(returning: self.maskImageCache[key])
+            }
         }
     }
     
-    private func generateCorticalBounds(center: CGPoint, width: CGFloat, height: CGFloat, plane: AnatomicalPlane) -> CGRect {
-        // Cortical regions follow the curvature of the brain surface
-        // Adjust orientation based on plane
-        let adjustedWidth: CGFloat
-        let adjustedHeight: CGFloat
-        
-        switch plane {
-        case .sagittal:
-            // In sagittal view, cortical regions are often vertically oriented
-            adjustedWidth = height
-            adjustedHeight = width
-        case .coronal, .axial:
-            // In coronal/axial views, maintain original proportions
-            adjustedWidth = width
-            adjustedHeight = height
+    private func cacheMaskImage(_ image: UIImage, for key: String) async {
+        await withCheckedContinuation { continuation in
+            cacheQueue.async(flags: .barrier) {
+                self.maskImageCache[key] = image
+                continuation.resume()
+            }
         }
-        
-        return CGRect(
-            x: center.x - adjustedWidth / 2,
-            y: center.y - adjustedHeight / 2,
-            width: adjustedWidth,
-            height: adjustedHeight
-        )
     }
     
-    private func generateSubcorticalBounds(center: CGPoint, width: CGFloat, height: CGFloat) -> CGRect {
-        // Subcortical regions are typically more circular/compact
-        let size = min(width, height) // Use smaller dimension for more circular shape
-        
-        return CGRect(
-            x: center.x - size / 2,
-            y: center.y - size / 2,
-            width: size,
-            height: size
-        )
-    }
-    
-    private func generateEllipticalBounds(center: CGPoint, width: CGFloat, height: CGFloat) -> CGRect {
-        return CGRect(
-            x: center.x - width / 2,
-            y: center.y - height / 2,
-            width: width,
-            height: height
-        )
+    func clearMaskCache() {
+        cacheQueue.async(flags: .barrier) {
+            self.maskImageCache.removeAll()
+        }
+        print("🧹 Cleared region mask cache")
     }
     
     func loadSliceImage(for slice: BrainSlice) async throws -> Data {

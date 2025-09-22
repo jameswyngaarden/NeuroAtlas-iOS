@@ -1,4 +1,4 @@
-// BrainAtlasViewModel.swift - Enhanced with minimal region highlighting integration
+// BrainAtlasViewModel.swift - Updated with region mask loading
 import Foundation
 import SwiftUI
 import Combine
@@ -37,7 +37,7 @@ class BrainAtlasViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     
-    // NEW: Region highlighting properties (minimal addition)
+    // NEW: Region highlighting properties
     @Published var showRegionHighlight = false
     @Published var currentRegionHighlight: RegionHighlight?
     
@@ -83,7 +83,7 @@ class BrainAtlasViewModel: ObservableObject {
                 updateCurrentCoordinateFromSlice()
             } catch {
                 errorMessage = "Failed to load brain data: \(error.localizedDescription)"
-                print("❌ Error loading data: \(error)")
+                print("Error loading data: \(error)")
             }
             
             isLoading = false
@@ -109,7 +109,7 @@ class BrainAtlasViewModel: ObservableObject {
         }
         
         currentSliceIndex = closestIndex
-        print("🎯 Set default slice to index \(closestIndex) (MNI position: \(sagittalSlices[closestIndex].mniPosition))")
+        print("Set default slice to index \(closestIndex) (MNI position: \(sagittalSlices[closestIndex].mniPosition))")
     }
     
     func handleTap(at location: CGPoint, containerSize: CGSize) {
@@ -146,7 +146,7 @@ class BrainAtlasViewModel: ObservableObject {
         } else {
             currentRegionHighlight = nil
         }
-        print("🎭 Region highlighting: \(showRegionHighlight ? "ON" : "OFF")")
+        print("Region highlighting: \(showRegionHighlight ? "ON" : "OFF")")
     }
     
     // NEW: Select specific region for highlighting
@@ -241,7 +241,7 @@ class BrainAtlasViewModel: ObservableObject {
         // NEW: Update region highlight for new plane
         updateRegionHighlightIfNeeded()
         
-        print("🔄 Switched to \(currentPlane.rawValue) plane, preserved coordinate: \(preservedCoordinate)")
+        print("Switched to \(currentPlane.rawValue) plane, preserved coordinate: \(preservedCoordinate)")
     }
     
     // FIXED: Update crosshair position when switching planes
@@ -262,7 +262,7 @@ class BrainAtlasViewModel: ObservableObject {
             y: screenPosition.y - imageOffset
         )
         
-        print("🎯 Updated crosshair position to \(crosshairPosition) for coordinate \(currentCoordinate) in \(currentPlane.rawValue) view")
+        print("Updated crosshair position to \(crosshairPosition) for coordinate \(currentCoordinate) in \(currentPlane.rawValue) view")
     }
     
     // FIXED: Separate method for updating brain regions
@@ -278,12 +278,12 @@ class BrainAtlasViewModel: ObservableObject {
                     updateRegionHighlightIfNeeded()
                 }
                 
-                print("🧠 Updated regions for coordinate \(currentCoordinate): found \(regions.count) regions")
+                print("Updated regions for coordinate \(currentCoordinate): found \(regions.count) regions")
                 for region in regions {
                     print("   - \(region.name) (\(region.category))")
                 }
             } catch {
-                print("❌ Error updating regions: \(error)")
+                print("Error updating regions: \(error)")
                 await MainActor.run {
                     currentRegions = []
                     selectedRegion = nil
@@ -293,7 +293,7 @@ class BrainAtlasViewModel: ObservableObject {
         }
     }
     
-    // NEW: Update region highlight based on current state
+    // NEW: Update region highlight using actual mask images
     private func updateRegionHighlightIfNeeded() {
         guard showRegionHighlight,
               let region = selectedRegion,
@@ -302,28 +302,27 @@ class BrainAtlasViewModel: ObservableObject {
             return
         }
         
-        // Generate region highlight bounds using dataService
+        // Load actual region mask image
         Task {
             do {
-                let bounds = try await dataService.generateRegionBounds(
-                    for: region,
-                    coordinate: currentCoordinate,
-                    plane: currentPlane,
-                    slice: slice,
-                    containerSize: lastContainerSize
-                )
-                
-                await MainActor.run {
-                    currentRegionHighlight = RegionHighlight(
-                        region: region,
-                        coordinate: currentCoordinate,
-                        plane: currentPlane,
-                        bounds: bounds
-                    )
-                    print("🎭 Updated region highlight for \(region.name)")
+                if let maskImage = try await dataService.loadRegionMask(for: region, slice: slice) {
+                    await MainActor.run {
+                        currentRegionHighlight = RegionHighlight(
+                            region: region,
+                            coordinate: currentCoordinate,
+                            plane: currentPlane,
+                            maskImage: maskImage
+                        )
+                        print("Updated region highlight for \(region.name)")
+                    }
+                } else {
+                    await MainActor.run {
+                        currentRegionHighlight = nil
+                        print("No mask available for \(region.name) in this slice")
+                    }
                 }
             } catch {
-                print("❌ Error generating region highlight: \(error)")
+                print("Error loading region mask: \(error)")
                 await MainActor.run {
                     currentRegionHighlight = nil
                 }

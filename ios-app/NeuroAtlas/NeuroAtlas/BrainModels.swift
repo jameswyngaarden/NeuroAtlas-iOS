@@ -1,4 +1,4 @@
-// BrainModels.swift - Enhanced with region highlighting capabilities (minimal additions)
+// BrainModels.swift - Updated with region mask support
 import Foundation
 import SwiftUI
 
@@ -50,6 +50,11 @@ struct BrainSlice: Codable, Identifiable {
         URL(string: "https://jameswyngaarden.github.io/NeuroAtlas-Images/slices/\(plane.rawValue)/\(imageFilename)")!
     }
     
+    // NEW: URL for region mask overlay
+    func regionMaskURL(for regionId: Int) -> URL {
+        URL(string: "https://jameswyngaarden.github.io/NeuroAtlas-Images/region_masks/\(plane.rawValue)/region_\(String(format: "%02d", regionId))/\(imageFilename)")!
+    }
+    
     private enum CodingKeys: String, CodingKey {
         case plane, bounds, description
         case mniPosition = "mni_position"
@@ -88,7 +93,7 @@ struct BrainRegion: Codable, Identifiable, Equatable {
     let probability: Float?
     let description: String?
     
-    // NEW: Color for highlighting this region
+    // Color for highlighting this region
     var highlightColor: Color {
         switch category.lowercased() {
         case "cortical":
@@ -126,12 +131,12 @@ struct CoordinateMappings: Codable {
     }
 }
 
-// NEW: Simple region highlight data structure
+// UPDATED: Region highlight data structure with actual mask image
 struct RegionHighlight {
     let region: BrainRegion
     let coordinate: MNICoordinate
     let plane: AnatomicalPlane
-    let bounds: CGRect // Screen coordinates for the region
+    let maskImage: UIImage // Store the actual transparent PNG
     
     var color: Color {
         region.highlightColor
