@@ -1,4 +1,4 @@
-// BrainDataService.swift - Updated with region mask loading
+// BrainDataService.swift - Enhanced debugging version
 import Foundation
 import UIKit
 
@@ -13,33 +13,44 @@ class BrainDataService {
     private let cacheQueue = DispatchQueue(label: "mask.cache", attributes: .concurrent)
     
     func loadCoordinateMappings() async throws -> CoordinateMappings {
-        print("🔍 Starting to load coordinate mappings...")
+        print("DEBUG: Starting to load coordinate mappings...")
         
         guard let url = URL(string: "\(baseURL)/coordinate_mappings.json") else {
-            print("❌ Invalid URL")
+            print("DEBUG: Invalid URL")
             throw BrainDataError.invalidData
         }
         
-        print("📡 Fetching data from: \(url)")
+        print("DEBUG: Fetching data from: \(url)")
         
         do {
             let (data, response) = try await URLSession.shared.data(from: url)
             
             if let httpResponse = response as? HTTPURLResponse {
-                print("📊 HTTP Status: \(httpResponse.statusCode)")
+                print("DEBUG: HTTP Status: \(httpResponse.statusCode)")
             }
             
-            print("📄 Data size: \(data.count) bytes")
-            
             let mappings = try JSONDecoder().decode(CoordinateMappings.self, from: data)
-            print("✅ Successfully decoded mappings")
-            print("📊 Sagittal slices: \(mappings.sagittal.count)")
-            print("📊 Coronal slices: \(mappings.coronal.count)")
-            print("📊 Axial slices: \(mappings.axial.count)")
+            
+            // DEBUG: Print first few slices from each plane to understand coordinate system
+            print("DEBUG: === COORDINATE SYSTEM ANALYSIS ===")
+            print("DEBUG: Sagittal slices (first 5):")
+            for (index, slice) in mappings.sagittal.prefix(5).enumerated() {
+                print("DEBUG:   [\(index)] MNI: \(slice.mniPosition), File: \(slice.imageFilename)")
+            }
+            
+            print("DEBUG: Coronal slices (first 5):")
+            for (index, slice) in mappings.coronal.prefix(5).enumerated() {
+                print("DEBUG:   [\(index)] MNI: \(slice.mniPosition), File: \(slice.imageFilename)")
+            }
+            
+            print("DEBUG: Axial slices (first 5):")
+            for (index, slice) in mappings.axial.prefix(5).enumerated() {
+                print("DEBUG:   [\(index)] MNI: \(slice.mniPosition), File: \(slice.imageFilename)")
+            }
             
             return mappings
         } catch {
-            print("❌ Error loading coordinate mappings: \(error)")
+            print("DEBUG: Error loading coordinate mappings: \(error)")
             throw error
         }
     }
@@ -48,7 +59,7 @@ class BrainDataService {
         // Load the lookup table once and cache it
         guard regionLookupTable == nil else { return } // Already loaded
         
-        print("🔍 Loading Harvard-Oxford region lookup table...")
+        print("DEBUG: Loading Harvard-Oxford region lookup table...")
         
         guard let url = URL(string: "\(baseURL)/harvard_oxford_lookup_2mm.json") else {
             throw BrainDataError.invalidData
@@ -58,21 +69,20 @@ class BrainDataService {
             let (data, response) = try await URLSession.shared.data(from: url)
             
             if let httpResponse = response as? HTTPURLResponse {
-                print("📊 Region lookup HTTP Status: \(httpResponse.statusCode)")
+                print("DEBUG: Region lookup HTTP Status: \(httpResponse.statusCode)")
             }
             
-            print("📄 Region lookup data size: \(data.count) bytes")
-            
             regionLookupTable = try JSONDecoder().decode([String: [BrainRegion]].self, from: data)
-            print("✅ Successfully loaded region lookup table with \(regionLookupTable?.count ?? 0) coordinate entries")
+            print("DEBUG: Successfully loaded region lookup table with \(regionLookupTable?.count ?? 0) coordinate entries")
         } catch {
-            print("❌ Error loading region lookup table: \(error)")
+            print("DEBUG: Error loading region lookup table: \(error)")
             throw error
         }
     }
     
     func lookupRegions(at coordinate: MNICoordinate) async throws -> [BrainRegion] {
-        print("🔍 Looking up regions at coordinate: \(coordinate)")
+        print("DEBUG: === REGION LOOKUP ===")
+        print("DEBUG: Looking up regions at coordinate: \(coordinate)")
         
         // Ensure lookup table is loaded
         try await loadRegionLookupTable()
@@ -81,39 +91,51 @@ class BrainDataService {
             throw BrainDataError.invalidData
         }
         
-        // IMPROVED: Smart lookup strategy for better precision
-        // 1. Try exact coordinate first
+        // Try exact coordinate first
         let exactKey = "\(coordinate.x),\(coordinate.y),\(coordinate.z)"
+        print("DEBUG: Trying exact key: \(exactKey)")
         
         if let exactRegions = lookupTable[exactKey], !exactRegions.isEmpty {
-            print("🔍 Found exact match at \(exactKey)")
+            print("DEBUG: Found exact match with \(exactRegions.count) regions")
+            for region in exactRegions {
+                print("DEBUG:   - Region \(region.id): \(region.name) (\(region.category))")
+            }
             return exactRegions
         }
         
-        // 2. Try even coordinates first (since atlas is 2mm resolution)
+        // Try even coordinates (2mm grid alignment)
         let evenCoord = MNICoordinate(
             x: coordinate.x % 2 == 0 ? coordinate.x : coordinate.x - 1,
             y: coordinate.y % 2 == 0 ? coordinate.y : coordinate.y - 1,
             z: coordinate.z % 2 == 0 ? coordinate.z : coordinate.z - 1
         )
         let evenKey = "\(evenCoord.x),\(evenCoord.y),\(evenCoord.z)"
+        print("DEBUG: Trying even coordinate key: \(evenKey)")
         
         if let evenRegions = lookupTable[evenKey], !evenRegions.isEmpty {
-            print("🔍 Found even coordinate match at \(evenKey) for original \(exactKey)")
+            print("DEBUG: Found even coordinate match with \(evenRegions.count) regions")
+            for region in evenRegions {
+                print("DEBUG:   - Region \(region.id): \(region.name) (\(region.category))")
+            }
             return evenRegions
         }
         
-        // 3. Try small neighborhood search (±2mm)
+        // Try neighborhood search
         let nearbyCoordinates = generateSmartNearbyCoordinates(coordinate)
+        print("DEBUG: Trying \(nearbyCoordinates.count) nearby coordinates...")
+        
         for nearbyCoord in nearbyCoordinates {
             let key = "\(nearbyCoord.x),\(nearbyCoord.y),\(nearbyCoord.z)"
             if let regions = lookupTable[key], !regions.isEmpty {
-                print("🔍 Found nearby match at \(key) for original \(exactKey)")
+                print("DEBUG: Found nearby match at \(key) with \(regions.count) regions")
+                for region in regions {
+                    print("DEBUG:   - Region \(region.id): \(region.name) (\(region.category))")
+                }
                 return regions
             }
         }
         
-        // 4. Fallback: traditional 2mm grid snapping
+        // Fallback: 2mm grid snapping
         let snappedX = Int(round(Double(coordinate.x) / 2.0)) * 2
         let snappedY = Int(round(Double(coordinate.y) / 2.0)) * 2
         let snappedZ = Int(round(Double(coordinate.z) / 2.0)) * 2
@@ -121,7 +143,7 @@ class BrainDataService {
         let snappedCoord = MNICoordinate(x: snappedX, y: snappedY, z: snappedZ)
         let coordKey = "\(snappedCoord.x),\(snappedCoord.y),\(snappedCoord.z)"
         
-        print("🔍 Fallback: snapped to 2mm grid: \(snappedCoord)")
+        print("DEBUG: Fallback to 2mm grid: \(coordKey)")
         
         let regions = lookupTable[coordKey] ?? []
         
@@ -133,53 +155,76 @@ class BrainDataService {
                 probability: 1.0,
                 description: "Area outside labeled cortical/subcortical regions"
             )
-            print("🔍 Found background region at \(coordKey)")
+            print("DEBUG: Using background region")
             return [backgroundRegion]
         } else {
-            print("🔍 Found \(regions.count) regions at \(coordKey)")
+            print("DEBUG: Found \(regions.count) regions at snapped coordinate")
             for region in regions {
-                print("   - \(region.name) (\(region.category))")
+                print("DEBUG:   - Region \(region.id): \(region.name) (\(region.category))")
             }
             return regions
         }
     }
     
-    // NEW: Load region mask image
+    // ENHANCED: Load region mask image with comprehensive debugging
     func loadRegionMask(for region: BrainRegion, slice: BrainSlice) async throws -> UIImage? {
+        print("DEBUG: === MASK LOADING ===")
+        print("DEBUG: Current slice info:")
+        print("DEBUG:   - Plane: \(slice.plane.rawValue)")
+        print("DEBUG:   - MNI Position: \(slice.mniPosition)")
+        print("DEBUG:   - Image Filename: \(slice.imageFilename)")
+        print("DEBUG:   - Description: \(slice.description)")
+        
         let cacheKey = "\(region.id)_\(slice.plane.rawValue)_\(slice.imageFilename)"
         
         // Check cache first
         if let cachedImage = await getCachedMaskImage(for: cacheKey) {
-            print("💾 Using cached mask for region \(region.name)")
+            print("DEBUG: Using cached mask for region \(region.name)")
             return cachedImage
         }
         
         let maskURL = slice.regionMaskURL(for: region.id)
-        print("🔍 Attempting to load mask from: \(maskURL)")
-        print("🔍 Region ID: \(region.id), Region Name: \(region.name)")
-        print("🔍 Slice filename: \(slice.imageFilename)")
-        print("🔍 Plane: \(slice.plane.rawValue)")
+        print("DEBUG: Constructed mask URL: \(maskURL)")
+        print("DEBUG: Region info:")
+        print("DEBUG:   - ID: \(region.id)")
+        print("DEBUG:   - Name: \(region.name)")
+        print("DEBUG:   - Category: \(region.category)")
+        
+        // ENHANCED: Try to predict what the filename should be
+        print("DEBUG: Expected mask path breakdown:")
+        print("DEBUG:   - Base: region_masks/\(slice.plane.rawValue)/region_\(String(format: "%02d", region.id))/")
+        print("DEBUG:   - Filename: \(slice.imageFilename)")
         
         do {
             let (data, response) = try await URLSession.shared.data(from: maskURL)
             
             if let httpResponse = response as? HTTPURLResponse {
-                print("📡 HTTP Response: \(httpResponse.statusCode)")
+                print("DEBUG: HTTP Response: \(httpResponse.statusCode)")
+                
+                if httpResponse.statusCode == 404 {
+                    print("DEBUG: 404 - Mask file not found. This could mean:")
+                    print("DEBUG:   1. No mask exists for this region in this slice")
+                    print("DEBUG:   2. Filename mismatch between brain slice and mask")
+                    print("DEBUG:   3. Region ID mismatch")
+                    return nil
+                }
                 
                 guard httpResponse.statusCode == 200 else {
-                    print("⚠️ Region mask not found (HTTP \(httpResponse.statusCode)) for region \(region.name) at \(maskURL)")
+                    print("DEBUG: HTTP error \(httpResponse.statusCode) for region \(region.name)")
                     return nil
                 }
             }
             
-            print("📄 Mask data size: \(data.count) bytes")
+            print("DEBUG: Downloaded \(data.count) bytes")
             
             guard let image = UIImage(data: data) else {
-                print("❌ Could not create image from mask data for region \(region.name)")
+                print("DEBUG: Failed to create UIImage from data")
                 return nil
             }
             
-            print("✅ Successfully loaded mask for region \(region.name) - Image size: \(image.size)")
+            print("DEBUG: Successfully created image:")
+            print("DEBUG:   - Size: \(image.size)")
+            print("DEBUG:   - Scale: \(image.scale)")
             
             // Cache the image
             await cacheMaskImage(image, for: cacheKey)
@@ -187,17 +232,17 @@ class BrainDataService {
             return image
             
         } catch {
-            print("❌ Error loading region mask for \(region.name): \(error)")
-            print("❌ Full error details: \(error.localizedDescription)")
+            print("DEBUG: Network error loading mask: \(error)")
+            print("DEBUG: Error details: \(error.localizedDescription)")
             return nil
         }
     }
     
-    // IMPROVED: Smart nearby coordinate generation for atlas lookup
+    // MARK: - Helper methods (unchanged)
+    
     private func generateSmartNearbyCoordinates(_ coordinate: MNICoordinate) -> [MNICoordinate] {
         var nearby: [MNICoordinate] = []
         
-        // Priority order: check 2mm grid points first (most likely to have data)
         let baseCoords = [
             MNICoordinate(x: coordinate.x - 2, y: coordinate.y, z: coordinate.z),
             MNICoordinate(x: coordinate.x + 2, y: coordinate.y, z: coordinate.z),
@@ -207,7 +252,6 @@ class BrainDataService {
             MNICoordinate(x: coordinate.x, y: coordinate.y, z: coordinate.z + 2)
         ]
         
-        // Add diagonal 2mm neighbors
         let diagonalCoords = [
             MNICoordinate(x: coordinate.x - 2, y: coordinate.y - 2, z: coordinate.z),
             MNICoordinate(x: coordinate.x + 2, y: coordinate.y + 2, z: coordinate.z),
@@ -222,8 +266,6 @@ class BrainDataService {
         
         return nearby
     }
-    
-    // MARK: - Cache management
     
     private func getCachedMaskImage(for key: String) async -> UIImage? {
         return await withCheckedContinuation { continuation in
@@ -246,11 +288,10 @@ class BrainDataService {
         cacheQueue.async(flags: .barrier) {
             self.maskImageCache.removeAll()
         }
-        print("🧹 Cleared region mask cache")
+        print("DEBUG: Cleared region mask cache")
     }
     
     func loadSliceImage(for slice: BrainSlice) async throws -> Data {
-        // Load image data from URL
         let (data, _) = try await URLSession.shared.data(from: slice.imageURL)
         return data
     }

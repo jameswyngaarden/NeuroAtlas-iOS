@@ -123,26 +123,61 @@ class RegionMaskGenerator:
     
     def generate_slice_coordinates(self, plane, atlas_shape):
         """Generate slice coordinates that match your existing slice generation"""
+        # FIXED: Generate coordinates to match your 1mm MNI coordinate system
         if plane == 'sagittal':
-            return range(20, atlas_shape[0] - 20)  # Skip edge slices
+            # Your range: -91 to +90 (182 slices)
+            return range(-91, 91)
         elif plane == 'coronal':  
-            return range(25, atlas_shape[1] - 25)
+            # Your range: -126 to +91 (218 slices)
+            return range(-126, 92)
         elif plane == 'axial':
-            return range(15, atlas_shape[2] - 15)
+            # Your range: -72 to +109 (182 slices)
+            return range(-72, 110)
+    
+    def mni_to_atlas_voxel(self, mni_coord, plane):
+        """Convert MNI coordinate to atlas voxel coordinate"""
+        if plane == 'sagittal':
+            # X: MNI to voxel conversion
+            return int((mni_coord + 90) / 2 + 0.5)  # Map -90→+90 to 0→90 voxels
+        elif plane == 'coronal':
+            # Y: MNI to voxel conversion  
+            return int((90 - mni_coord) / 2 + 18)   # Map -126→+90 to 0→108 voxels
+        elif plane == 'axial':
+            # Z: MNI to voxel conversion
+            return int((mni_coord + 72) / 2 + 0.5)  # Map -72→+108 to 0→90 voxels
     
     def generate_masks_for_plane(self, plane):
         """Generate all region masks for a specific anatomical plane"""
-        atlas_shape = self.cortical_data.shape
-        slice_coords = self.generate_slice_coordinates(plane, atlas_shape)
+        print(f"Generating {plane} masks...")
         
-        print(f"Generating {plane} masks for {len(slice_coords)} slices...")
+        # FIXED: Use your MNI coordinate system directly
+        if plane == 'sagittal':
+            mni_coords = range(-91, 91)  # Your actual range
+        elif plane == 'coronal':  
+            mni_coords = range(-126, 92)  # Your actual range
+        elif plane == 'axial':
+            mni_coords = range(-72, 110)  # Your actual range
         
-        for slice_idx, slice_coord in enumerate(slice_coords):
-            print(f"  Processing {plane} slice {slice_idx + 1}/{len(slice_coords)} (coord: {slice_coord})")
+        print(f"  Processing {len(mni_coords)} slices from MNI {min(mni_coords)} to {max(mni_coords)}")
+        
+        for slice_idx, mni_coord in enumerate(mni_coords):
+            print(f"  Processing {plane} slice {slice_idx + 1}/{len(mni_coords)} (MNI: {mni_coord})")
+            
+            # Convert MNI coordinate to atlas voxel coordinate
+            atlas_voxel = self.mni_to_atlas_voxel(mni_coord, plane)
+            
+            # Skip if voxel is outside atlas bounds
+            atlas_shape = self.cortical_data.shape
+            if plane == 'sagittal' and (atlas_voxel < 0 or atlas_voxel >= atlas_shape[0]):
+                continue
+            elif plane == 'coronal' and (atlas_voxel < 0 or atlas_voxel >= atlas_shape[1]):
+                continue  
+            elif plane == 'axial' and (atlas_voxel < 0 or atlas_voxel >= atlas_shape[2]):
+                continue
             
             # Extract slices from both atlases
-            cortical_slice = self.extract_slice(self.cortical_data, plane, slice_coord)
-            subcortical_slice = self.extract_slice(self.subcortical_data, plane, slice_coord)
+            cortical_slice = self.extract_slice(self.cortical_data, plane, atlas_voxel)
+            subcortical_slice = self.extract_slice(self.subcortical_data, plane, atlas_voxel)
             
             # Generate masks for each priority region
             for region_id, region_name in PRIORITY_REGIONS.items():
@@ -162,36 +197,25 @@ class RegionMaskGenerator:
                 # Create transparent overlay
                 overlay_image = self.create_transparent_overlay(mask, region_id)
                 
-                # NEW: Generate filename based on MNI coordinate instead of slice index
-                filename = self.get_mni_filename(plane, slice_coord)
+                # FIXED: Generate filename to match your MNI coordinate naming
+                filename = f"{plane}_{mni_coord:+03d}.png"
                 output_path = self.output_dir / 'region_masks' / plane / f'region_{region_id:02d}' / filename
                 
                 overlay_image.save(output_path, 'PNG')
                 
                 print(f"    Saved {region_name} mask: {output_path}")
     
-    def get_mni_filename(self, plane, slice_coord):
-        """
-        Generate filename that matches MNI coordinate naming convention
-        This should match your existing brain slice naming pattern
-        """
-        # Convert atlas voxel coordinates to MNI coordinates
-        # Standard MNI space: voxel size is 2mm, origin at (45, 63, 36) for 91x109x91 volume
-        
+    def mni_to_atlas_voxel(self, mni_coord, plane):
+        """Convert MNI coordinate to atlas voxel coordinate"""
         if plane == 'sagittal':
-            # X coordinate: voxel 45 = MNI X=0, each voxel = 2mm
-            mni_coord = (slice_coord - 45) * 2
-            return f"sagittal_{mni_coord:+03d}.png"  # e.g., sagittal_+12.png, sagittal_-08.png
-            
+            # X: MNI to voxel conversion  
+            return int((mni_coord + 90) / 2 + 0.5)  # Map -90→+90 to 0→90 voxels
         elif plane == 'coronal':
-            # Y coordinate: voxel 63 = MNI Y=0, each voxel = 2mm  
-            mni_coord = (63 - slice_coord) * 2  # Note: Y axis is flipped
-            return f"coronal_{mni_coord:+03d}.png"
-            
+            # Y: MNI to voxel conversion
+            return int((90 - mni_coord) / 2 + 18)   # Map -126→+90 to 0→108 voxels
         elif plane == 'axial':
-            # Z coordinate: voxel 36 = MNI Z=0, each voxel = 2mm
-            mni_coord = (slice_coord - 36) * 2
-            return f"axial_{mni_coord:+03d}.png"
+            # Z: MNI to voxel conversion
+            return int((mni_coord + 72) / 2 + 0.5)  # Map -72→+108 to 0→90 voxels
     
     def generate_all_masks(self):
         """Generate masks for all planes and priority regions"""
